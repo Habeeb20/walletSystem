@@ -6,6 +6,8 @@ import morgan from "morgan";
 
 import connectDB from "./db.js";
 import jwt from "jsonwebtoken"
+import { configureHelmet } from "./utils/security.js";
+import router from "./routes/user.route.js";
 
 
 connectDB()
@@ -18,6 +20,8 @@ connectDB()
 dotenv.config();
 
 const app = express();
+
+configureHelmet(app)
 
 
 
@@ -46,6 +50,8 @@ app.get("/", (req, res) => {
   res.send("this backend is listening on port....");
 });
 
+
+app.use("/api/auth", router)
 // Error handling
 app.use((err, req, res, next) => {
   console.error("Error:", err.stack);
