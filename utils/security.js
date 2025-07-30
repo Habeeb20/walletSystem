@@ -318,3 +318,28 @@ export function authenticateToken(req, res, next) {
     res.status(403).json({ error: 'Invalid or expired token' });
   }
 }
+
+
+
+export const validationResetPasswordInput = [
+  body('email').isEmail().withMessage('invalid email address'),
+  body('code').isLength({min: 4, max:4}).withMessage('code must be 4 digits'),
+    body('newPassword')
+    .isLength({ min: 8 })
+    .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/)
+    .withMessage('New password must be at least 8 characters, with uppercase, lowercase, number, and special character'),
+  (req, res, next) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+    next();
+  },
+]
+
+
+export const resetPasswordLimiter = rateLimit({
+  windowMs: 15 * 60 *1000,
+  max:3,
+  message:'Too many password reset requests, please try again later'
+})

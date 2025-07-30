@@ -1,5 +1,5 @@
 import User from "../models/user/userModel.js";
-import { generateUsernameSuggestions, hashPassword, generateJwtToken, generateWebAuthnRegistrationOptions, verifyWebAuthnAuthentication, validateEmailVerificationInput } from "../utils/security.js";
+import { generateUsernameSuggestions, hashPassword, generateJwtToken, generateWebAuthnRegistrationOptions, verifyWebAuthnAuthentication, validateEmailVerificationInput, resetPasswordLimiter, generate4DigitCode, sendEmailVerificationCode, validationResetPasswordInput } from "../utils/security.js";
 
 export const register = async(req, res) => {
  try {
@@ -169,3 +169,51 @@ export const loginWithPassword = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+
+
+export const initiateResetPassword = async(req, res) => {
+  try {
+    const {email} = req.body
+    await resetPasswordLimiter(req,res, async() => {
+      const user = await User.findOne({email});
+      if(!user) return res.status(404).json({message: "user's email not found"})
+
+
+    const resetCode = generate4DigitCode()
+    user.emailVerificationCode = resetCode;
+    await user.save()
+    await sendEmailVerificationCode(email, resetCode)
+
+    verificationCodes.set(user._id.toString(), resetCode)
+    res.json({message: "password reset code sent to email"})
+    })
+  } catch (error) {
+    console.log(error)
+    res.status(500).json({message:"an error occurred "})
+  }
+}
+
+
+
+export const resetPassword = async(req, res) => {
+  try {
+    await validationResetPasswordInput(req, res, async() => {
+      const {email, code, newPassword} = req.body;
+      const user = await User.findOne({email})
+      if(!user) return res.status(404).json({message:"user not found"})
+      
+      const storedCode = verificationCodes.get(user._id,toString())
+      if(!storedCode || storedCode !== code) return res.status(404).json({message:"reset code is not valid"})
+
+      user.password = await hashPassword(newPassword);
+      user.emailVerificationCode = null;
+      await user.save();
+      verificationCodes.delete(user._id.toString())
+
+      res.json({message: 'password reset successfully'})
+    })
+  } catch (error) {
+    console.log(error)
+    res.status(500).json({error: error.message})
+  }
+}
