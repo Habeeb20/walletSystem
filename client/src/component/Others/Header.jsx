@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
+import { APP_NAME } from '../utils/projectName';
 
 const Header = () => {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
     <header className="bg-gradient-to-r from-green-900 to-green-700 text-white p-3 flex justify-between items-center fixed w-full z-10 shadow-lg transition-all duration-300">
-      <div className="text-3xl font-bold tracking-wide text-green-200">Paydow</div>
+      <div className="text-3xl font-bold tracking-wide text-green-200">{APP_NAME}</div>
       <nav className="hidden md:flex space-x-6">
         <a href="#home" className="hover:text-green-300 transition-colors duration-200">Home</a>
         <a href="#contact" className="hover:text-green-300 transition-colors duration-200">Contact us</a>
