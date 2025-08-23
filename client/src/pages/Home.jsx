@@ -14,7 +14,7 @@ const Home = () => {
       <ExchangeSection/>
       <WalletSetupSection/>
       <DashboardSection/>
-      <PaymentIntegrationSection/>
+    
     </div>
   )
 }
