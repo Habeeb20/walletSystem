@@ -6,6 +6,7 @@ import Home from './pages/Home';
 import MobileDevice from './component/home/MobileDevice';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import './App.css'
+import Footer from './component/Others/Footer';
 const App = () => {
   return (
     <div>
@@ -15,6 +16,7 @@ const App = () => {
           <Route path="/" element={<Home />} />
           <Route path="/mobile" element={<MobileDevice />} />
         </Routes>
+        <Footer/>
       </Router>
     </div>
   );
