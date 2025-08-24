@@ -72,9 +72,12 @@ const HeroSection = () => {
             variants={childVariants}
             className="flex flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-4"
           >
-            <button className="bg-white text-green-700 px-6 py-3 rounded mb-6 hover:bg-gray-200">
+            <a href='/signup'>
+                    <button className="bg-white text-green-700 px-6 py-3 rounded mb-6 hover:bg-gray-200">
               Get Started
             </button>
+            </a>
+        
             <button className="bg-transparent border-2 border-white text-white px-6 py-3 rounded mb-6 hover:bg-white hover:text-green-700">
               Link Bank Account
             </button>

@@ -7,11 +7,14 @@ const Header = () => {
 
   return (
     <header className="bg-gradient-to-r from-green-900 to-green-700 text-white p-3 flex justify-between items-center fixed w-full z-10 shadow-lg transition-all duration-300">
-      <div className="text-3xl font-bold tracking-wide text-green-200">{APP_NAME}</div>
+      <a href='/'>
+               <div className="text-3xl font-bold tracking-wide text-green-200">{APP_NAME}</div>
+      </a>
+ 
       <nav className="hidden md:flex space-x-6">
-        <a href="#home" className="hover:text-green-300 transition-colors duration-200">Home</a>
-        <a href="#contact" className="hover:text-green-300 transition-colors duration-200">Contact us</a>
-        <a href="#login" className="hover:text-green-300 transition-colors duration-200">Login</a>
+        <a href="/" className="hover:text-green-300 transition-colors duration-200">Home</a>
+        <a href="/contact" className="hover:text-green-300 transition-colors duration-200">Contact us</a>
+        <a href="/login" className="hover:text-green-300 transition-colors duration-200">Login</a>
         <button className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg shadow-md transition-all duration-200">Sign Up</button>
       </nav>
       <div className="md:hidden flex items-center">
@@ -23,10 +26,13 @@ const Header = () => {
       </div>
       {isOpen && (
         <div className="md:hidden absolute top-16 right-4 bg-green-800 p-4 rounded-lg shadow-lg flex flex-col space-y-4 w-40">
-          <a href="#home" className="hover:text-green-300 transition-colors duration-200">Home</a>
-          <a href="#contact" className="hover:text-green-300 transition-colors duration-200">Contact us</a>
-          <a href="#login" className="hover:text-green-300 transition-colors duration-200">Login</a>
-          <button className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg shadow-md transition-all duration-200">Sign Up</button>
+          <a href="/" className="hover:text-green-300 transition-colors duration-200">Home</a>
+          <a href="/contact" className="hover:text-green-300 transition-colors duration-200">Contact us</a>
+          <a href="/login" className="hover:text-green-300 transition-colors duration-200">Login</a>
+          <a href='/signup'>
+             <button className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg shadow-md transition-all duration-200">Sign Up</button>
+          </a>
+
         </div>
       )}
     </header>

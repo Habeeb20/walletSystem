@@ -44,6 +44,14 @@ export default {
       animation: {
         fadeIn: 'fadeIn 0.8s ease-out forwards',
       },
+      colors: {
+        'dark-green-1': '#1A3C34',
+        'dark-green-2': '#2E4F44',
+        'medium-green-1': '#4A7C67',
+        'medium-green-2': '#09a353',
+        'light-gray': '#D9D9D9',
+        'custom-green': '#1A3C34',
+      },
     },
   },
   plugins: [import('tailwindcss-animate')],

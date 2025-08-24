@@ -1,5 +1,5 @@
 import React from 'react';
-
+import {APP_NAME} from "../utils/projectName.js"
 const Footer = () => {
   return (
     <footer className="bg-green-900 text-white py-6 px-4 md:px-8">
@@ -7,7 +7,7 @@ const Footer = () => {
         {/* Logo and Tagline */}
         <div className="flex flex-col items-start">
           <div className="flex items-center mb-2">
-            <span className="text-2xl font-bold text-green-200">Habeeeb</span>
+            <span className="text-2xl font-bold text-green-200">{APP_NAME}</span>
           </div>
           <p className="text-sm text-green-300">Start spending the smart way</p>
         </div>

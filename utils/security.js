@@ -103,6 +103,7 @@ export async function generateUsernameSuggestions(fullName, User) {
 
     return suggestions;
   } catch (error) {
+    console.log(error)
     throw new Error('Username generation failed: ' + error.message);
   }
 }
@@ -259,7 +260,8 @@ export const loginRateLimiter = rateLimit({
   message: 'Too many login attempts, please try again later.',
 });
 
-// Input validation for user registration
+
+
 export const validateRegisterInput = [
   body('email').isEmail().withMessage('Invalid email address'),
   body('password')
@@ -269,12 +271,12 @@ export const validateRegisterInput = [
   (req, res, next) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
+      const errorMessages = errors.array().map(err => err.msg).join(', ');
+      return res.status(400).json({ error: errorMessages });
     }
     next();
   },
 ];
-
 // Input validation for transactions
 export const validateTransactionInput = [
   body('amount').isFloat({ min: 0.01 }).withMessage('Amount must be greater than 0'),
