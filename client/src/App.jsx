@@ -8,6 +8,7 @@ import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import './App.css'
 import Footer from './component/Others/Footer';
 import SignupPage from './pages/auth/Signup';
+import LoginPage from './pages/auth/LoginPage';
 const App = () => {
   return (
     <div>
@@ -16,6 +17,7 @@ const App = () => {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path='/signup' element={<SignupPage />} />
+          <Route path='/login' element={<LoginPage/>} />
           {/* <Route path="/mobile" element={<MobileDevice />} /> */}
         </Routes>
         <Footer/>
