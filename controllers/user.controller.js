@@ -6,12 +6,13 @@ export const register = async(req, res) => {
     const {email, password, fullName, phone} = req.body
     const hashedPassword = await hashPassword(password)
     const usernameSuggestions = await generateUsernameSuggestions(fullName, User)
-
-    const user = new User({email, password:hashedPassword, fullName, phone })
+    const emailVerificationCode = Math.floor(1000 + Math.random() * 9000).toString();
+    const user = new User({email, password:hashedPassword, fullName, phone, emailVerificationCode })
 
     await user.save()
 
     const token = generateJwtToken(user._id)
+    sendEmailVerificationCode(user.email,   user.emailVerificationCode )
     res.json({token, usernameSuggestions})
  } catch (error) {
     console.log(error)
@@ -149,7 +150,7 @@ export const loginWithBiometrics = async (req, res) => {
 // Login with email and password
 export const loginWithPassword = async (req, res) => {
   try {
-    await validateLoginInput(req, res, async () => {
+ 
       const { email, password } = req.body;
       const user = await User.findOne({ email });
       if (!user) return res.status(404).json({ error: "User not found" });
@@ -163,7 +164,7 @@ export const loginWithPassword = async (req, res) => {
 
       const token = generateJwtToken(user._id);
       res.json({ token });
-    });
+  
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: error.message });

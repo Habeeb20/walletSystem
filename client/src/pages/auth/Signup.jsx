@@ -180,7 +180,7 @@ import { registerUser } from '../../redux/authSlice';
 import WalletLoadingAnimation from '../../resources/wallet';
 import { useSnackbar } from 'notistack';
 import { TailSpin } from 'react-loader-spinner';
-
+import { useNavigate } from 'react-router-dom';
 const SignupPage = () => {
   const [fullName, setFullName] = useState('');
   const [phone, setPhone] = useState('');
@@ -191,7 +191,7 @@ const SignupPage = () => {
   const { loading, error, token } = useSelector((state) => state.auth);
   const dispatch = useDispatch();
   const { enqueueSnackbar } = useSnackbar();
-
+  const navigate = useNavigate()
   useEffect(() => {
     // No username suggestions needed
   }, []);
@@ -208,7 +208,11 @@ const SignupPage = () => {
       .then((response) => {
         enqueueSnackbar('Registration successful!', { variant: 'success' });
         if (response.token) {
-          enqueueSnackbar(`Token received: ${response.token}`, { variant: 'info' });
+          enqueueSnackbar('Token received', { variant: 'info' });
+          // enqueueSnackbar(`Token received: ${response.token}`, { variant: 'info' });
+          localStorage.setItem("email", userData.email)
+
+          navigate("/verifyemail")
         }
       })
     .catch((err) => {

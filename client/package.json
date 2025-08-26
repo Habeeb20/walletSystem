@@ -12,6 +12,12 @@
   },
   "dependencies": {
     "@cloudinary/url-gen": "^1.21.0",
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.1",
+    "@fortawesome/free-solid-svg-icons": "^7.0.0",
+    "@fortawesome/react-fontawesome": "^3.0.0",
+    "@heroicons/react": "^1.0.6",
+    "@mui/icons-material": "^7.3.1",
     "@reduxjs/toolkit": "^2.8.2",
     "@tabler/icons-react": "^3.34.0",
     "aos": "^2.3.4",

@@ -6,7 +6,7 @@ const router = express.Router()
 
 router.post('/register', validateRegisterInput, register)
 router.post('/select-username', authenticateToken, selectUsername)
-router.post('/veryemail', verifyEmail)
+router.post('/verifyemail', verifyEmail)
 router.post('/login', loginRateLimiter, loginWithPassword)
 router.post('/biometric-login', loginRateLimiter, loginWithBiometrics)
 router.post('/biometric-register', authenticateToken, registerBiometrics)

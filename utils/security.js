@@ -75,6 +75,7 @@ export async function sendEmailVerificationCode(email, code) {
       html: `<p>Your verification code is: <strong>${code}</strong></p>`,
     });
   } catch (error) {
+    console.log(error)
     throw new Error('Failed to send verification email: ' + error.message);
   }
 }

@@ -9,6 +9,7 @@ import './App.css'
 import Footer from './component/Others/Footer';
 import SignupPage from './pages/auth/Signup';
 import LoginPage from './pages/auth/LoginPage';
+import VerifyEmailPage from './pages/auth/VerifyEmail';
 const App = () => {
   return (
     <div>
@@ -18,6 +19,7 @@ const App = () => {
           <Route path="/" element={<Home />} />
           <Route path='/signup' element={<SignupPage />} />
           <Route path='/login' element={<LoginPage/>} />
+          <Route path='/verifyemail' element={<VerifyEmailPage/>} />
           {/* <Route path="/mobile" element={<MobileDevice />} /> */}
         </Routes>
         <Footer/>
