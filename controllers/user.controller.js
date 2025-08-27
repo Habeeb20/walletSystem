@@ -1,5 +1,10 @@
 import User from "../models/user/userModel.js";
-import { generateUsernameSuggestions, hashPassword, generateJwtToken, generateWebAuthnRegistrationOptions, verifyWebAuthnAuthentication, validateEmailVerificationInput, resetPasswordLimiter, generate4DigitCode, sendEmailVerificationCode, validationResetPasswordInput } from "../utils/security.js";
+import { generateUsernameSuggestions, hashPassword, verifyPassword, generateJwtToken, generateWebAuthnRegistrationOptions, verifyWebAuthnAuthentication, validateEmailVerificationInput, resetPasswordLimiter, generate4DigitCode, sendEmailVerificationCode, validationResetPasswordInput } from "../utils/security.js";
+
+
+
+
+const verificationCodes = new Map();
 
 export const register = async(req, res) => {
  try {
@@ -74,22 +79,23 @@ export const registerBiometrics = async (req, res) => {
 export const verifyEmail = async (req, res) => {
   try {
     const { email, code } = req.body;
-    await validateEmailVerificationInput(req, res, async () => {
+
       const user = await User.findOne({ email });
       if (!user) return res.status(404).json({ error: "User not found" });
 
-      const storedCode = verificationCodes.get(user._id.toString());
-      if (!storedCode || storedCode !== code) {
-        return res.status(400).json({ error: "Invalid verification code" });
+      if(code !== user.emailVerificationCode){
+          console.log("the code is not correct")
+         return res.status(400).json({ error: "Invalid verification code" });
       }
 
+    
       user.isEmailVerified = true;
       user.emailVerificationCode = null;
       await user.save();
       verificationCodes.delete(user._id.toString());
 
       res.json({ message: "Email verified successfully" });
-    });
+
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: error.message });
@@ -171,6 +177,31 @@ export const loginWithPassword = async (req, res) => {
   }
 };
 
+
+export const dashboard = async (req, res) => {
+  try {
+  
+    const userId = req.user.id; 
+    const user = await User.findById(userId).select('-password -emailVerificationCode'); 
+
+    if (!user) return res.status(404).json({ error: "User not found" });
+
+
+    res.json({
+      message: "Welcome to your dashboard",
+      user: {
+        id: user._id,
+        fullName: user.fullName,
+        email: user.email,
+        phone: user.phone,
+        isEmailVerified: user.isEmailVerified,
+      },
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: error.message });
+  }
+};
 
 export const initiateResetPassword = async(req, res) => {
   try {

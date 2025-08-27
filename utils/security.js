@@ -310,14 +310,15 @@ export function configureHelmet(app) {
 // Middleware to authenticate JWT
 export function authenticateToken(req, res, next) {
   const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1]; // Bearer <token>
+  const token = authHeader && authHeader.split(' ')[1]; 
   if (!token) return res.status(401).json({ error: 'Access token required' });
 
   try {
-    const decoded = verifyJwtToken(token);
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
     req.user = decoded;
     next();
   } catch (error) {
+    console.log(error)
     res.status(403).json({ error: 'Invalid or expired token' });
   }
 }

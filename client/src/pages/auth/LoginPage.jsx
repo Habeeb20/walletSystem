@@ -6,7 +6,7 @@ import { loginUser } from '../../redux/authSlice';
 import WalletLoadingAnimation from '../../resources/wallet';
 import { useSnackbar } from 'notistack';
 import { TailSpin } from 'react-loader-spinner';
-
+import { useNavigate } from 'react-router-dom';
 const LoginPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -14,6 +14,7 @@ const LoginPage = () => {
   const { loading, error, token } = useSelector((state) => state.auth);
   const dispatch = useDispatch();
   const { enqueueSnackbar } = useSnackbar();
+  const navigate = useNavigate()
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -23,7 +24,9 @@ const LoginPage = () => {
       .then((response) => {
         enqueueSnackbar('Login successful!', { variant: 'success' });
         if (response.token) {
-          enqueueSnackbar(`Token received: ${response.token}`, { variant: 'info' });
+          enqueueSnackbar('Token received', { variant: 'info' });
+          localStorage.setItem("token", response.token)
+          navigate("/dashboard")
         }
       })
       .catch((err) => {
