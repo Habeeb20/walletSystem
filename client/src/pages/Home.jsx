@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 import DashboardSection from "../component/home/DashboardSection"
 import ExchangeSection from "../component/home/ExchangeSection"
 import HeroSection from "../component/home/HeroSection"

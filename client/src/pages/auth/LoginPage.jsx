@@ -24,7 +24,7 @@ const LoginPage = () => {
       .then((response) => {
         enqueueSnackbar('Login successful!', { variant: 'success' });
         if (response.token) {
-          enqueueSnackbar('Token received', { variant: 'info' });
+          // enqueueSnackbar('Token received', { variant: 'info' });
           localStorage.setItem("token", response.token)
           navigate("/dashboard")
         }

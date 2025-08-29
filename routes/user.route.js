@@ -1,6 +1,6 @@
 import express from "express"
 import { authenticateToken, loginRateLimiter, resetPasswordLimiter, validateRegisterInput } from "../utils/security.js"
-import { dashboard, initiateResetPassword, loginWithBiometrics, loginWithPassword, register, registerBiometrics, resetPassword, selectUsername, verifyBiometrics, verifyEmail } from "../controllers/user.controller.js"
+import { dashboard, getCustomerDetails, initiateResetPassword, loginWithBiometrics, loginWithPassword, register, registerBiometrics, resetPassword, selectUsername, verifyBiometrics, verifyEmail } from "../controllers/user.controller.js"
 
 const router = express.Router()
 
@@ -13,5 +13,6 @@ router.post('/biometric-login', loginRateLimiter, loginWithBiometrics)
 router.post('/biometric-register', authenticateToken, registerBiometrics)
 router.post('/reset-password/initiate', resetPasswordLimiter, initiateResetPassword)
 router.post('/reset-password', resetPassword)
+router.get('/customer', authenticateToken, getCustomerDetails)
 
 export default router

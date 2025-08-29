@@ -15,7 +15,10 @@ const Header = () => {
         <a href="/" className="hover:text-green-300 transition-colors duration-200">Home</a>
         <a href="/contact" className="hover:text-green-300 transition-colors duration-200">Contact us</a>
         <a href="/login" className="hover:text-green-300 transition-colors duration-200">Login</a>
-        <button className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg shadow-md transition-all duration-200">Sign Up</button>
+        <a href='/signup'>
+                  <button className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg shadow-md transition-all duration-200">Sign Up</button>
+        </a>
+
       </nav>
       <div className="md:hidden flex items-center">
         <button onClick={() => setIsOpen(!isOpen)} className="text-white focus:outline-none">

@@ -196,9 +196,9 @@ export async function generateWebAuthnAuthenticationOptions() {
 
 ///generate a jwt token
 
-export function generateJwtToken(userId){
+export function generateJwtToken(userId, email){
     try {
-        return jwt.sign({id: userId}, JWT_SECRET, {expiresIn: "7d"})
+        return jwt.sign({id: userId, email: email}, JWT_SECRET, {expiresIn: "7d"})
     } catch (error) {
         throw new Error("token generation failed" + error.message)
     }

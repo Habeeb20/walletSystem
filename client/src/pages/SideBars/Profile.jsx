@@ -1,0 +1,116 @@
+/* eslint-disable no-unused-vars */
+import React, { useEffect, useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchCustomerDetails } from '../../redux/authSlice';
+import { useSnackbar } from 'notistack';
+import { TailSpin } from 'react-loader-spinner';
+import WalletLoadingAnimation from '../../resources/wallet';
+
+const Profile = () => {
+  const dispatch = useDispatch();
+  const { loading, customerDetails, error } = useSelector((state) => state.auth);
+  const [virtualAccountCompleted, setVirtualAccountCompleted] = useState(false);
+
+  useEffect(() => {
+    dispatch(fetchCustomerDetails());
+  }, [dispatch]);
+
+  const progressSteps = [
+    { id: 'account', label: 'Create Account', completed: true },
+    { id: 'customer', label: 'Create Customer Account', completed: true },
+    { id: 'virtual', label: 'Virtual Account', completed: virtualAccountCompleted }
+  ];
+
+  return (
+    <div className="min-h-screen  to-indigo-100 p-6">
+      {loading && <WalletLoadingAnimation loading={loading} />}
+      <div className="max-w-3xl mx-auto">
+        {/* Progress Bar */}
+        <div className="mb-8">
+          <h2 className="text-xl font-semibold text-gray-700 mb-4">Account Setup Progress</h2>
+          <div className="flex justify-between items-center">
+            {progressSteps.map((step, index) => (
+              <div key={step.id} className="flex-1 flex flex-col items-center">
+                <div
+                  className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                    step.completed
+                      ? 'bg-gradient-to-r from-green-900 to-green-700 text-white'
+                      : 'bg-gray-300 text-gray-600'
+                  }`}
+                >
+                  {step.completed ? (
+                    <svg
+                      className="w-6 h-6"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M5 13l4 4L19 7"
+                      />
+                    </svg>
+                  ) : (
+                    index + 1
+                  )}
+                </div>
+                <span className="mt-2 text-sm text-gray-600">{step.label}</span>
+                {index < progressSteps.length - 1 && (
+                  <div
+                    className={`flex-1 h-1 mx-2 ${
+                      progressSteps[index + 1].completed ? 'bg-green-500' : 'bg-gray-300'
+                    }`}
+                  ></div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Customer Details Card */}
+        <div className="bg-white rounded-lg shadow-lg p-6 transform transition-all duration-300 hover:shadow-xl">
+          <h2 className="text-2xl font-bold  mb-4">Customer Profile</h2>
+          {loading ? (
+            <div className="text-center text-gray-500">Loading details...</div>
+          ) : error ? (
+            <div className="text-center text-red-500">{error}</div>
+          ) : customerDetails ? (
+            <div className="space-y-4">
+              <div className="flex items-center">
+                <span className="w-32 text-gray-600 font-medium">First Name:</span>
+                <span className="text-gray-800">{customerDetails.first_name}</span>
+              </div>
+              <div className="flex items-center">
+                <span className="w-32 text-gray-600 font-medium">Last Name:</span>
+                <span className="text-gray-800">{customerDetails.last_name}</span>
+              </div>
+              <div className="flex items-center">
+                <span className="w-32 text-gray-600 font-medium">Email:</span>
+                <span className="text-gray-800">{customerDetails.email}</span>
+              </div>
+              <div className="flex items-center">
+                <span className="w-32 text-gray-600 font-medium">Phone Number:</span>
+                <span className="text-gray-800">{customerDetails.phone}</span>
+              </div>
+            </div>
+          ) : (
+            <div className="text-center text-gray-500">No details available</div>
+          )}
+        </div>
+
+        {/* Optional Button to Mark Virtual Account */}
+        <button
+          onClick={() => setVirtualAccountCompleted(true)}
+          className="mt-4 bg-green-500 text-white p-2 rounded hover:bg-green-600 transition duration-300"
+          disabled={virtualAccountCompleted}
+        >
+          Mark Virtual Account Complete
+        </button>
+      </div>
+    </div>
+  );
+};
+
+export default Profile;
