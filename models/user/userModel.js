@@ -24,7 +24,12 @@ const userSchema = new mongoose.Schema({
       status: { type: String, enum: ['pending', 'success', 'failed'] },
       createdAt: { type: Date, default: Date.now }
     }]
-  } 
+  }, 
+  virtualAccountDetails: {
+  account_number: { type: String },
+  account_name: { type: String },
+  bank: { type: String },
+},
 
 });
 

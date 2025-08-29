@@ -1,6 +1,6 @@
 import User from "../models/user/userModel.js";
 import { generateUsernameSuggestions, hashPassword, verifyPassword, generateJwtToken, generateWebAuthnRegistrationOptions, verifyWebAuthnAuthentication, validateEmailVerificationInput, resetPasswordLimiter, generate4DigitCode, sendEmailVerificationCode, validationResetPasswordInput } from "../utils/security.js";
-import { createCustomer, getCustomer } from "../utils/paystack.js";
+import { createCustomer, getCustomer, createVirtualAccount } from "../utils/paystack.js";
 
 
 
@@ -301,8 +301,28 @@ export const getCustomerDetails = async (req, res) => {
 
 
 
+export const createUserVirtualAccount = async (req, res) => {
+  try {
+    const user = await User.findOne({ email: req.user?.email }).select('paystackCustomerId email');
+    console.log('Found user:', user);
+    if (!user || !user.paystackCustomerId) {
+      return res.status(400).json({ error: 'No customer account found' });
+    }
 
+    const virtualAccount = await createVirtualAccount(user.paystackCustomerId, user.email);
+    user.virtualAccountDetails = {
+      account_number: virtualAccount.account_number,
+      account_name: virtualAccount.account_name,
+      bank: virtualAccount.bank.name,
+    };
+    await user.save();
 
+    res.json({ message: 'Virtual account created', details: user.virtualAccountDetails });
+  } catch (error) {
+    console.error('Create virtual account error:', error);
+    res.status(500).json({ error: `Failed to create virtual account: ${error.message}` });
+  }
+};
 
 
 

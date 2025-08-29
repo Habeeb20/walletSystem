@@ -68,3 +68,38 @@ export const walletCallback = async(req, res) => {
     res.status(500).json({ error: error.message });
   }
 }
+
+
+export const handlePaystackWebhook = async (req, res) => {
+  const event = req.body;
+  if (event.event === 'transfer.success') {
+    const { recipient_code, amount } = event.data;
+    const user = await User.findOne({ virtualAccountDetails: { account_number: event.data.destination.account_number } });
+    if (user) {
+      user.wallet.balance += amount / 100; // Convert to NGN
+      await user.save();
+      // Notify user via email or push
+    }
+  }
+  res.status(200).send('Webhook received');
+};
+
+
+
+
+
+export const payBill = async (req, res) => {
+  try {
+    const { billType, provider, phone, amount } = req.body;
+    const user = await User.findOne({ email: req.user.email });
+    if (user.wallet.balance < amount) return res.status(400).json({ error: 'Insufficient balance' });
+
+    const payment = await payBill(billType, provider, phone, amount);
+    user.wallet.balance -= amount;
+    await user.save();
+
+    res.json({ message: 'Bill payment successful', payment });
+  } catch (error) {
+    res.status(500).json({ error: `Bill payment failed: ${error.message}` });
+  }
+};

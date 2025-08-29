@@ -428,6 +428,29 @@ export const fetchCustomerDetails = createAsyncThunk(
 
 
 
+export const createVirtualAccount = createAsyncThunk(
+  'auth/createVirtualAccount',
+  async ({ token, customerId }, { rejectWithValue }) => {
+    try {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/auth/create-virtual-account`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ customerId }),
+      });
+      if (!response.ok) throw new Error('Failed to create virtual account');
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
+
+
 const authSlice = createSlice({
   name: 'auth',
   initialState: {
@@ -511,19 +534,25 @@ const authSlice = createSlice({
       .addCase(fetchCustomerDetails.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
-      });
+      })
+       .addCase(createVirtualAccount.pending, (state) => {
+    state.loading = true;
+    state.error = null;
+  })
+  .addCase(createVirtualAccount.fulfilled, (state, action) => {
+    state.loading = false;
+    state.customerDetails = { ...state.customerDetails, ...action.payload };
+  })
+  .addCase(createVirtualAccount.rejected, (state, action) => {
+    state.loading = false;
+    state.error = action.payload;
+  });
+
   },
 });
 
 export const { logout } = authSlice.actions;
 export default authSlice.reducer;
-
-
-
-
-
-
-
 
 
 
