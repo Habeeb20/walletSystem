@@ -10,11 +10,19 @@ const Profile = () => {
   const dispatch = useDispatch();
   const { loading, customerDetails, error } = useSelector((state) => state.auth);
   const [virtualAccountCompleted, setVirtualAccountCompleted] = useState(false);
+      const token = localStorage.getItem('token');
+useEffect(() => {
 
-  useEffect(() => {
-    dispatch(fetchCustomerDetails());
-  }, [dispatch]);
-
+    const timer = setTimeout(() => {
+      if (token) {
+        dispatch(fetchCustomerDetails());
+      } else {
+        console.warn('Token not available, delaying fetch...');
+    
+      }
+    }, 500); // Wait 500ms for rehydration
+    return () => clearTimeout(timer);
+  }, [dispatch, token]);
   const progressSteps = [
     { id: 'account', label: 'Create Account', completed: true },
     { id: 'customer', label: 'Create Customer Account', completed: true },
@@ -101,13 +109,13 @@ const Profile = () => {
         </div>
 
         {/* Optional Button to Mark Virtual Account */}
-        <button
+        {/* <button
           onClick={() => setVirtualAccountCompleted(true)}
           className="mt-4 bg-green-500 text-white p-2 rounded hover:bg-green-600 transition duration-300"
           disabled={virtualAccountCompleted}
         >
           Mark Virtual Account Complete
-        </button>
+        </button> */}
       </div>
     </div>
   );

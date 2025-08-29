@@ -136,6 +136,9 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const { loading, dashboardData } = useSelector((state) => state.auth);
   const token = localStorage.getItem("token");
+    const [activeMenu, setActiveMenu] = useState('Dashboard');
+
+
 
   useEffect(() => {
     dispatch(fetchDashboard());
@@ -158,11 +161,21 @@ const Dashboard = () => {
     if (window.innerWidth < 768) setIsMenuOpen(false);
   };
 
+   const handleMenuClick = (component, menuName) => {
+    setActiveMenu(menuName);
+    handleNavigation(component);
+  };
+
   const handleLogout = () => {
     dispatch(logout());
     localStorage.removeItem("token");
     navigate('/login');
   };
+
+
+  const baseClasses = 'block py-2.5 px-4 text-gray-700 hover:bg-gray-200 flex items-center';
+
+  const activeClasses = 'block py-2.5 px-4 text-white bg-gradient-to-r from-green-900 to-green-700 rounded-l-lg flex items-center';
 
   return (
     <div className="flex h-screen bg-gray-100">
@@ -185,24 +198,94 @@ const Dashboard = () => {
       </nav>
 
       {/* Sidebar */}
-      <div className={`fixed inset-y-16 left-0 w-64 h-[calc(100%-4rem)] bg-white shadow-lg z-10 transition-transform duration-300 ${isMenuOpen ? 'translate-x-0' : '-translate-x-full'} md:relative md:translate-x-0 md:w-64 md:inset-y-16 md:h-[calc(100%-4rem)]`}>
-        <nav className="mt-2">
-          <a href="#" onClick={() => handleNavigation(<Dashboard1 />)} className="block py-2.5 px-4 text-white bg-gradient-to-r from-green-900 to-green-700 rounded-l-lg flex items-center"><span className="mr-2">🏠</span>Dashboard</a>
-          <a href="#" onClick={() => handleNavigation(<Transfer />)} className="block py-2.5 px-4 text-gray-700 hover:bg-gray-200 flex items-center"><span className="mr-2">💸</span>Transfer</a>
-          <a href="#" onClick={() => handleNavigation(<Data />)} className="block py-2.5 px-4 text-gray-700 hover:bg-gray-200 flex items-center"><span className="mr-2">📊</span>Data</a>
-          <a href="#" onClick={() => handleNavigation(<Airtime />)} className="block py-2.5 px-4 text-gray-700 hover:bg-gray-200 flex items-center"><span className="mr-2">📞</span>Airtime</a>
-          <a href="#" onClick={() => handleNavigation(<CableTV />)} className="block py-2.5 px-4 text-gray-700 hover:bg-gray-200 flex items-center"><span className="mr-2">📺</span>Cable TV</a>
-          <a href="#" onClick={() => handleNavigation(<Electricity />)} className="block py-2.5 px-4 text-gray-700 hover:bg-gray-200 flex items-center"><span className="mr-2">⚡</span>Electricity</a>
-          <div className="mt-1">
-            <h3 className="px-4 text-sm font-semibold text-gray-500">ACCOUNT</h3>
-            <a href="#" onClick={() => handleNavigation(<Profile />)} className="block py-2.5 px-4 text-gray-700 hover:bg-gray-200 flex items-center"><span className="mr-2">👤</span>Profile</a>
-            <a href="#" onClick={() => handleNavigation(<Settings />)} className="block py-2.5 px-4 text-gray-700 hover:bg-gray-200 flex items-center"><span className="mr-2">⚙️</span>Settings</a>
-            <a href="#" onClick={() => handleNavigation(<Security />)} className="block py-2.5 px-4 text-gray-700 hover:bg-gray-200 flex items-center"><span className="mr-2">🔒</span>Security</a>
-            <a href="#" onClick={() => handleNavigation(<HelpSupport />)} className="block py-2.5 px-4 text-gray-700 hover:bg-gray-200 flex items-center"><span className="mr-2">❓</span>Help & Support</a>
-            <a href="#" onClick={handleLogout} className="block py-2.5 px-4 text-gray-700 hover:bg-gray-200 flex items-center"><span className="mr-2">🚪</span>Logout</a>
-          </div>
-        </nav>
-      </div>
+      <div
+      className={`fixed inset-y-16 left-0 w-64 h-[calc(100%-4rem)] bg-white shadow-lg z-10 transition-transform duration-300 ${
+        isMenuOpen ? 'translate-x-0' : '-translate-x-full'
+      } md:relative md:translate-x-0 md:w-64 md:inset-y-16 md:h-[calc(100%-4rem)]`}
+    >
+      <nav className="mt-2">
+        <a
+          href="#"
+          onClick={() => handleMenuClick(<Dashboard1 />, 'Dashboard')}
+          className={activeMenu === 'Dashboard' ? activeClasses : baseClasses}
+        >
+          <span className="mr-2">🏠</span>Dashboard
+        </a>
+        <a
+          href="#"
+          onClick={() => handleMenuClick(<Transfer />, 'Transfer')}
+          className={activeMenu === 'Transfer' ? activeClasses : baseClasses}
+        >
+          <span className="mr-2">💸</span>Transfer
+        </a>
+        <a
+          href="#"
+          onClick={() => handleMenuClick(<Data />, 'Data')}
+          className={activeMenu === 'Data' ? activeClasses : baseClasses}
+        >
+          <span className="mr-2">📊</span>Data
+        </a>
+        <a
+          href="#"
+          onClick={() => handleMenuClick(<Airtime />, 'Airtime')}
+          className={activeMenu === 'Airtime' ? activeClasses : baseClasses}
+        >
+          <span className="mr-2">📞</span>Airtime
+        </a>
+        <a
+          href="#"
+          onClick={() => handleMenuClick(<CableTV />, 'Cable TV')}
+          className={activeMenu === 'Cable TV' ? activeClasses : baseClasses}
+        >
+          <span className="mr-2">📺</span>Cable TV
+        </a>
+        <a
+          href="#"
+          onClick={() => handleMenuClick(<Electricity />, 'Electricity')}
+          className={activeMenu === 'Electricity' ? activeClasses : baseClasses}
+        >
+          <span className="mr-2">⚡</span>Electricity
+        </a>
+        <div className="mt-1">
+          <h3 className="px-4 text-sm font-semibold text-gray-500">ACCOUNT</h3>
+          <a
+            href="#"
+            onClick={() => handleMenuClick(<Profile />, 'Profile')}
+            className={activeMenu === 'Profile' ? activeClasses : baseClasses}
+          >
+            <span className="mr-2">👤</span>Profile
+          </a>
+          <a
+            href="#"
+            onClick={() => handleMenuClick(<Settings />, 'Settings')}
+            className={activeMenu === 'Settings' ? activeClasses : baseClasses}
+          >
+            <span className="mr-2">⚙️</span>Settings
+          </a>
+          <a
+            href="#"
+            onClick={() => handleMenuClick(<Security />, 'Security')}
+            className={activeMenu === 'Security' ? activeClasses : baseClasses}
+          >
+            <span className="mr-2">🔒</span>Security
+          </a>
+          <a
+            href="#"
+            onClick={() => handleMenuClick(<HelpSupport />, 'Help & Support')}
+            className={activeMenu === 'Help & Support' ? activeClasses : baseClasses}
+          >
+            <span className="mr-2">❓</span>Help & Support
+          </a>
+          <a
+            href="#"
+            onClick={handleLogout}
+            className={activeMenu === 'Logout' ? activeClasses : baseClasses}
+          >
+            <span className="mr-2">🚪</span>Logout
+          </a>
+        </div>
+      </nav>
+    </div>
 
       {/* Main Content */}
       <div className="flex-1 ml-0 md:ml-0 p-6 overflow-y-auto ml-4 md:ml-4 pt-16 md:pt-16">
@@ -216,5 +299,43 @@ const Dashboard = () => {
 };
 
 export default Dashboard;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 

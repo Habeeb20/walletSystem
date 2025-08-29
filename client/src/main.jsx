@@ -7,11 +7,19 @@ import App from './App.jsx'
 import { Toaster } from 'sonner'
 import { Provider } from 'react-redux';
 import { store } from './redux/store.js';
+import { PersistGate } from 'redux-persist/lib/integration/react.js';
+import {persistor} from "./redux/store/index.js"
+
 createRoot(document.getElementById('root')).render(
   <StrictMode>
         <Provider store={store}>
+        <PersistGate
+        loading={null}
+        persistor={persistor}
+        onBeforeLift={() => console.log('Persisted state after rehydration:', store.getState())}
+      >
      <SnackbarProvider
-    maxSnack={3} // Limit to 3 notifications at a time
+    maxSnack={3} 
     anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
     classes={{
       variantSuccess: 'bg-green-500 text-white',
@@ -25,6 +33,7 @@ createRoot(document.getElementById('root')).render(
 					<App />
 			  <Toaster richColors position="top-right" />
 	  </SnackbarProvider>
+    </PersistGate>
        </Provider>
   </StrictMode>,
 )

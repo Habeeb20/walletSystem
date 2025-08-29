@@ -42,6 +42,7 @@ import Header from './component/Others/Header';
 import { motion } from 'framer-motion';
 import Home from './pages/Home';
 import MobileDevice from './component/home/MobileDevice';
+import { PersistGate } from 'redux-persist/integration/react';
 import { BrowserRouter as Router, Route, Routes, useLocation } from 'react-router-dom';
 import './App.css';
 import Footer from './component/Others/Footer';
@@ -82,3 +83,8 @@ const App = () => {
 };
 
 export default App;
+
+
+
+
+
