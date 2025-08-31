@@ -235,7 +235,7 @@
 
 
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-
+import axios from 'axios';
 export const registerUser = createAsyncThunk(
   'auth/register',
   async (userData, { rejectWithValue }) => {
@@ -291,92 +291,18 @@ export const verifyEmail = createAsyncThunk(
 );
 
 export const fetchDashboard = createAsyncThunk(
-  'auth/dashboard',
-  async (_, { rejectWithValue, getState }) => {
+  'auth/fetchDashboard',
+  async (token, { rejectWithValue }) => {
     try {
-      const { auth } = getState();
-      const token = auth.token;
-      if (!token) throw new Error('No authentication token');
-
-      console.log('Fetching dashboard with token:', token);
-
-      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/auth/dashboard`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
+      const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/auth/dashboard`, {
+        headers: { Authorization: `Bearer ${token}` },
       });
-      if (!response.ok) throw new Error('Failed to fetch dashboard');
-      const data = await response.json();
-      return data;
+      return response.data.data;
     } catch (error) {
-      return rejectWithValue(error.message);
+      return rejectWithValue(error.response?.data?.message || 'Failed to fetch dashboard data');
     }
   }
 );
-// export const fetchCustomerDetails = createAsyncThunk(
-//   'auth/fetchCustomerDetails',
-//   async (_, { rejectWithValue, getState }) => {
-//     try {
-//       const { auth } = getState();
-//       let token = auth.token;
-
-//       console.log('Initial token from Redux:', token);
-
-//       if (!token) {
-//         const persistedState = localStorage.getItem('persist:root');
-//         console.log('Persisted state:', persistedState);
-//         if (persistedState) {
-//           const parsedState = JSON.parse(persistedState);
-//           const authState = parsedState.auth ? JSON.parse(parsedState.auth) : null;
-//           token = authState?.token;
-//           console.log('Token from persisted state:', token);
-//         }
-//         // Fallback to localStorage token if still null
-//         if (!token) {
-//           token = localStorage.getItem('token');
-//           console.log('Token from localStorage fallback:', token);
-//         }
-//         if (!token) throw new Error('No authentication token');
-//       }
-//       console.log('Final token used:', token);
-
-//       const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/auth/customer?t=${Date.now()}`, {
-//         method: 'GET',
-//         headers: {
-//           'Content-Type': 'application/json',
-//           'Authorization': `Bearer ${token}`,
-//         },
-//       });
-
-//       console.log('Raw response status:', response.status);
-//       console.log('Raw response headers:', Object.fromEntries(response.headers.entries()));
-
-//       if (!response.ok && response.status !== 304) {
-//         const errorText = await response.text();
-//         console.error('API Error Response:', errorText);
-//         throw new Error(`HTTP error! status: ${response.status}, message: ${errorText || 'Unknown error'}`);
-//       }
-
-//       if (response.status === 304) {
-//         console.warn('304 Not Modified, using cached data or rejecting');
-//         throw new Error('Resource not modified, please refresh or clear cache');
-//       }
-
-//       const data = await response.json();
-//       console.log('Fetched customer data before validation:', data);
-//       if (!data || typeof data !== 'object') {
-//         console.error('Invalid data type:', typeof data, 'Data:', data);
-//         throw new Error('Invalid response data');
-//       }
-//       return data;
-//     } catch (error) {
-//       console.error('Fetch customer details error:', error);
-//       return rejectWithValue(error.message);
-//     }
-//   }
-// );
 
 export const fetchCustomerDetails = createAsyncThunk(
   'auth/fetchCustomerDetails',
@@ -451,6 +377,65 @@ export const createVirtualAccount = createAsyncThunk(
 
 
 
+
+export const createPaylonyVirtualAccount = createAsyncThunk(
+  'auth/createPaylonyVirtualAccount',
+  async ({ dob, address, gender }, { getState, rejectWithValue }) => {
+    const token = localStorage.getItem('token');
+    const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/auth/create-paylony-virtual-account`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify({ dob, address, gender }),
+    });
+    if (!response.ok) {
+      const errorData = await response.json();
+      return rejectWithValue(errorData.error || 'Failed to create Paylony virtual account');
+    }
+    return response.json();
+  }
+);
+
+
+
+
+
+export const checkVirtualAccount = createAsyncThunk(
+  'auth/checkVirtualAccount',
+  async (token, { getState, rejectWithValue }) => {
+    try {
+      const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/auth/check-virtual-account`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || 'Failed to check virtual account');
+    }
+  }
+);
+
+
+
+
+export const fundWallet = createAsyncThunk(
+  'auth/fundWallet',
+  async ({ token, amount }, { rejectWithValue }) => {
+    try {
+      const response = await axios.post(
+        `${import.meta.env.VITE_BACKEND_URL}/wallet/fund-wallet`,
+        { amount },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      return response.data.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || 'Failed to fund wallet');
+    }
+  }
+);
+
+
 const authSlice = createSlice({
   name: 'auth',
   initialState: {
@@ -460,6 +445,7 @@ const authSlice = createSlice({
     usernameSuggestions: [],
     dashboardData: null,
     customerDetails: null,
+    virtualAccountCompleted: false,
   },
   reducers: {
     logout: (state) => {
@@ -546,33 +532,61 @@ const authSlice = createSlice({
   .addCase(createVirtualAccount.rejected, (state, action) => {
     state.loading = false;
     state.error = action.payload;
-  });
+  })
+    .addCase(createPaylonyVirtualAccount.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(createPaylonyVirtualAccount.fulfilled, (state, action) => {
+        state.loading = false;
+        state.customerDetails = {
+          ...state.customerDetails,
+          paylonyVirtualAccountDetails: action.payload.details,
+        };
+        state.virtualAccountCompleted = true;
+      })
+      .addCase(createPaylonyVirtualAccount.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+      .addCase(checkVirtualAccount.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+    .addCase(checkVirtualAccount.fulfilled, (state, action) => {
+        state.loading = false;
+        state.virtualAccountCompleted = action.payload.exists;
+        if (action.payload.virtualAccountDetails) {
+          state.customerDetails = {
+            ...state.customerDetails,
+            virtualAccountDetails: action.payload.virtualAccountDetails,
+          };
+        }
+      })
+      .addCase(checkVirtualAccount.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+       .addCase(fundWallet.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fundWallet.fulfilled, (state, action) => {
+        state.loading = false;
+        if (state.dashboardData?.user) {
+          state.dashboardData.user.wallet.balance += action.payload.amount || 0;
+        }
+      })
+      .addCase(fundWallet.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      });
 
   },
 });
 
-export const { logout } = authSlice.actions;
+export const { logout,  } = authSlice.actions;
 export default authSlice.reducer;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

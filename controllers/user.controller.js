@@ -1,8 +1,10 @@
 import User from "../models/user/userModel.js";
 import { generateUsernameSuggestions, hashPassword, verifyPassword, generateJwtToken, generateWebAuthnRegistrationOptions, verifyWebAuthnAuthentication, validateEmailVerificationInput, resetPasswordLimiter, generate4DigitCode, sendEmailVerificationCode, validationResetPasswordInput } from "../utils/security.js";
-import { createCustomer, getCustomer, createVirtualAccount } from "../utils/paystack.js";
+import { createCustomer, getCustomer, createVirtualAccount, createPaylonyVirtualAccount } from "../utils/paystack.js";
 
+import dotenv from "dotenv"
 
+dotenv.config();
 
 const verificationCodes = new Map();
 
@@ -203,28 +205,43 @@ export const loginWithPassword = async (req, res) => {
 };
 
 
-export const dashboard = async (req, res) => {
+
+export const fetchDashboard = async (req, res) => {
+ 
   try {
-  
-    const userId = req.user.id; 
-    const user = await User.findById(userId).select('-password -emailVerificationCode'); 
+    const user = await User.findOne({ _id: req.user.id }).select(
+      'fullName wallet virtualAccountDetails'
+    );
+    if (!user) return res.status(404).json({ error: 'User not found' });
 
-    if (!user) return res.status(404).json({ error: "User not found" });
-
+    const walletBalance = user.wallet?.balance || 0;
+    const virtualBalance = user.virtualAccountDetails?.balance || 0; 
+    const totalBalance = walletBalance + virtualBalance;
+    const income = user.wallet?.transactions
+      ?.filter((t) => t.type === 'credit')
+      .reduce((sum, t) => sum + t.amount, 0) || 0;
+    const expenses = user.wallet?.transactions
+      ?.filter((t) => t.type === 'debit')
+      ?.reduce((sum, t) => sum + t.amount, 0) || 0;
 
     res.json({
-      message: "Welcome to your dashboard",
-      user: {
-        id: user._id,
-        fullName: user.fullName,
-        email: user.email,
-        phone: user.phone,
-        isEmailVerified: user.isEmailVerified,
+      success: true,
+      data: {
+        user: {
+          fullName: user.fullName,
+          wallet: {
+            balance: walletBalance,
+            transactions: user.wallet?.transactions || [],
+          },
+          virtualAccountDetails: user.virtualAccountDetails || null,
+        },
+        totalBalance,
+        income,
+        expenses,
       },
     });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: `Failed to fetch dashboard: ${error.message}` });
   }
 };
 
@@ -282,7 +299,7 @@ export const resetPassword = async(req, res) => {
 
 export const getCustomerDetails = async (req, res) => {
   try {
-    const user = await User.findOne({ email: req.user.email }).select('paystackCustomerId');
+    const user = await User.findOne({ email: req.user.email }).select('paystackCustomerId first_name last_name email phone  virtualAccountDetails wallet');
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
@@ -291,8 +308,8 @@ export const getCustomerDetails = async (req, res) => {
     }
 
     const customer = await getCustomer(user.paystackCustomerId);
-    const { first_name, last_name, email, phone } = customer;
-    res.json({ first_name, last_name, email, phone });
+    const { first_name, last_name, email, phone, virtualAccountDetails, wallet } = customer;
+    res.json({ first_name, last_name, email, phone, virtualAccountDetails, wallet });
   } catch (error) {
     console.error('Get customer details error:', error);
     res.status(500).json({ error: `Failed to fetch customer details: ${error.message}` });
@@ -340,7 +357,57 @@ export const createUserVirtualAccount = async (req, res) => {
 
 
 
+export const createPaylonyUserVirtualAccount = async (req, res) => {
+  try {
+    const { dob, address, gender } = req.body;
+    if (!dob || !address || !gender) {
+      return res.status(400).json({ error: 'DOB, address, and gender are required' });
+    }
+
+    const user = await User.findOne({ email: req.user.email }).select('email first_name last_name phone');
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const paylonySecretKey = "sk_live_n7zbakvo4qtbdwb2usjcni2if6qpnhsl1vkvsoo";
+    if (!paylonySecretKey) {
+      return res.status(500).json({ error: 'Paylony secret key not configured' });
+    }
+
+    const virtualAccount = await createPaylonyVirtualAccount({
+      email:user.email,
+      dob,
+      address,
+      gender,
+      firstname:user.first_name,
+      lastname:user.last_name,
+      phone:user.phone,
+      paylonySecretKey
+  });
+
+  console.log(virtualAccount, "your account")
+    user.paylonyVirtualAccountDetails = virtualAccount;
+    await user.save();
+
+    res.json({ message: 'Paylony virtual account created', details: virtualAccount });
+  } catch (error) {
+    console.error('Create Paylony virtual account error:', error);
+    res.status(500).json({ error: error.message });
+  }
+};
 
 
 
 
+export const checkVirtualAccount = async (req, res) => {
+  try {
+    const user = await User.findOne({ email: req.user.email });
+    if (!user) return res.status(404).json({ error: 'User not found' });
+
+    const hasVirtualAccount = !!user.virtualAccountDetails;
+    console.log('Virtual account exists:', hasVirtualAccount);
+    res.json({ success: true, exists: hasVirtualAccount, virtualAccountDetails: hasVirtualAccount ? user.virtualAccountDetails : null, });
+  } catch (error) {
+    res.status(500).json({ error: `Failed to check virtual account: ${error.message}` });
+  }
+};

@@ -53,7 +53,7 @@ app.use(morgan("dev"));
 
 // Routes
 app.get("/", (req, res) => {
-  res.send("this backend is listening on port....");
+  res.send("wallet backend is listening on port....");
 });
 
 

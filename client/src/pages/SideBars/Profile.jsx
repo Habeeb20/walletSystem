@@ -1,8 +1,10 @@
 /* eslint-disable no-unused-vars */
-// /* eslint-disable no-unused-vars */
+
+
+
 // import React, { useEffect, useState } from 'react';
 // import { useDispatch, useSelector } from 'react-redux';
-// import { fetchCustomerDetails } from '../../redux/authSlice';
+// import { fetchCustomerDetails, createVirtualAccount } from '../../redux/authSlice';
 // import { useSnackbar } from 'notistack';
 // import { TailSpin } from 'react-loader-spinner';
 // import WalletLoadingAnimation from '../../resources/wallet';
@@ -11,19 +13,31 @@
 //   const dispatch = useDispatch();
 //   const { loading, customerDetails, error } = useSelector((state) => state.auth);
 //   const [virtualAccountCompleted, setVirtualAccountCompleted] = useState(false);
-//       const token = localStorage.getItem('token');
-// useEffect(() => {
+//   const token = localStorage.getItem('token');
 
+//   useEffect(() => {
 //     const timer = setTimeout(() => {
 //       if (token) {
 //         dispatch(fetchCustomerDetails());
 //       } else {
 //         console.warn('Token not available, delaying fetch...');
-    
 //       }
 //     }, 500); // Wait 500ms for rehydration
 //     return () => clearTimeout(timer);
 //   }, [dispatch, token]);
+
+//   const handleCreateVirtualAccount = async () => {
+//     if (token && customerDetails) {
+//       try {
+//         const response = await dispatch(createVirtualAccount({ token, customerId: customerDetails.id })).unwrap();
+//         setVirtualAccountCompleted(true);
+//         dispatch(fetchCustomerDetails()); // Refresh customer details with virtual account info
+//       } catch (error) {
+//         console.error('Failed to create virtual account:', error);
+//       }
+//     }
+//   };
+
 //   const progressSteps = [
 //     { id: 'account', label: 'Create Account', completed: true },
 //     { id: 'customer', label: 'Create Customer Account', completed: true },
@@ -103,6 +117,23 @@
 //                 <span className="w-32 text-gray-600 font-medium">Phone Number:</span>
 //                 <span className="text-gray-800">{customerDetails.phone}</span>
 //               </div>
+//               {customerDetails.virtualAccountDetails && (
+//                 <div>
+//                   <h3 className="text-lg font-semibold text-gray-700 mt-4">Virtual Account Details</h3>
+//                   <div className="flex items-center">
+//                     <span className="w-32 text-gray-600 font-medium">Account Number:</span>
+//                     <span className="text-gray-800">{customerDetails.virtualAccountDetails.account_number}</span>
+//                   </div>
+//                   <div className="flex items-center">
+//                     <span className="w-32 text-gray-600 font-medium">Account Name:</span>
+//                     <span className="text-gray-800">{customerDetails.virtualAccountDetails.account_name}</span>
+//                   </div>
+//                   <div className="flex items-center">
+//                     <span className="w-32 text-gray-600 font-medium">Bank:</span>
+//                     <span className="text-gray-800">{customerDetails.virtualAccountDetails.bank}</span>
+//                   </div>
+//                 </div>
+//               )}
 //             </div>
 //           ) : (
 //             <div className="text-center text-gray-500">No details available</div>
@@ -110,13 +141,13 @@
 //         </div>
 
 //         {/* Optional Button to Mark Virtual Account */}
-//         {/* <button
-//           onClick={() => setVirtualAccountCompleted(true)}
-//           className="mt-4 bg-green-500 text-white p-2 rounded hover:bg-green-600 transition duration-300"
+//         <button
+//           onClick={handleCreateVirtualAccount}
+//           className="mt-4 bg-gradient-to-r from-green-900 to-green-700 text-white p-2 rounded hover:bg-green-600 transition duration-300"
 //           disabled={virtualAccountCompleted}
 //         >
-//           Mark Virtual Account Complete
-//         </button> */}
+//           Create Virtual Account
+//         </button>
 //       </div>
 //     </div>
 //   );
@@ -127,23 +158,26 @@
 
 
 
-import React, { useEffect, useState } from 'react';
+
+
+import React, { useEffect } from 'react'; // Removed useState since it's now in Redux
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchCustomerDetails, createVirtualAccount } from '../../redux/authSlice';
+import { fetchCustomerDetails, createVirtualAccount, checkVirtualAccount } from '../../redux/authSlice';
 import { useSnackbar } from 'notistack';
 import { TailSpin } from 'react-loader-spinner';
 import WalletLoadingAnimation from '../../resources/wallet';
 
 const Profile = () => {
   const dispatch = useDispatch();
-  const { loading, customerDetails, error } = useSelector((state) => state.auth);
-  const [virtualAccountCompleted, setVirtualAccountCompleted] = useState(false);
+  const { loading, customerDetails, error, virtualAccountCompleted } = useSelector((state) => state.auth);
   const token = localStorage.getItem('token');
 
+  console.log(virtualAccountCompleted)
   useEffect(() => {
     const timer = setTimeout(() => {
       if (token) {
         dispatch(fetchCustomerDetails());
+        dispatch(checkVirtualAccount(token)); // Check virtual account status
       } else {
         console.warn('Token not available, delaying fetch...');
       }
@@ -154,9 +188,8 @@ const Profile = () => {
   const handleCreateVirtualAccount = async () => {
     if (token && customerDetails) {
       try {
-        const response = await dispatch(createVirtualAccount({ token, customerId: customerDetails.id })).unwrap();
-        setVirtualAccountCompleted(true);
-        dispatch(fetchCustomerDetails()); // Refresh customer details with virtual account info
+        await dispatch(createVirtualAccount({ token, customerId: customerDetails.id })).unwrap();
+        dispatch(fetchCustomerDetails()); 
       } catch (error) {
         console.error('Failed to create virtual account:', error);
       }
@@ -175,7 +208,7 @@ const Profile = () => {
       <div className="max-w-3xl mx-auto">
         {/* Progress Bar */}
         <div className="mb-8">
-          <h2 className="text-xl font-semibold text-gray-700 mb-4">Account Setup Progress</h2>
+          <h2 className="text-xl font-semibold text-black mb-4">Account Setup Progress</h2>
           <div className="flex justify-between items-center">
             {progressSteps.map((step, index) => (
               <div key={step.id} className="flex-1 flex flex-col items-center">
@@ -219,7 +252,7 @@ const Profile = () => {
 
         {/* Customer Details Card */}
         <div className="bg-white rounded-lg shadow-lg p-6 transform transition-all duration-300 hover:shadow-xl">
-          <h2 className="text-2xl font-bold  mb-4">Customer Profile</h2>
+          <h2 className="text-2xl font-bold text-black mb-4">Customer Profile</h2>
           {loading ? (
             <div className="text-center text-gray-500">Loading details...</div>
           ) : error ? (
@@ -265,7 +298,7 @@ const Profile = () => {
           )}
         </div>
 
-        {/* Optional Button to Mark Virtual Account */}
+        {/* Create Virtual Account Button */}
         <button
           onClick={handleCreateVirtualAccount}
           className="mt-4 bg-gradient-to-r from-green-900 to-green-700 text-white p-2 rounded hover:bg-green-600 transition duration-300"

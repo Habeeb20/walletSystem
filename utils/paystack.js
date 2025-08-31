@@ -212,3 +212,51 @@ export const payBill = async (billType, provider, phone, amount) => {
     throw new Error(`Bill payment failed: ${error.message}`);
   }
 };
+
+
+
+
+
+export const createPaylonyVirtualAccount = async (email, dob, address, gender, firstname, lastname, phone, paylonySecretKey) => {
+  try {
+    const payload = {
+      email,
+      dob,
+      address,
+      gender,
+      firstname,
+      lastname,
+      phone,
+    };
+
+    const response = await pRetry(
+      () =>
+        axios.post(
+          'https://api.paylony.com/api/v1/create_account', 
+          payload,
+          {
+            headers: {
+              Authorization: `Bearer ${paylonySecretKey}`,
+              'Content-Type': 'application/json',
+            },
+          }
+        ),
+      { retries: 3, minTimeout: 1000 }
+    );
+
+    const data = response.data;
+    if (data.status !== '00') {
+      throw new Error(data.message || 'Failed to create Paylony virtual account');
+    }
+
+    return {
+      account_number: data.receiving_account || 'N/A',
+      account_name: data.sender_account_name || 'N/A',
+      bank: data.gateway || 'N/A',
+    };
+  } catch (error) {
+    const message = error.response?.data?.message || error.message;
+    console.error('Paylony virtual account creation error:', error.response?.data || error);
+    throw new Error(`Paylony virtual account creation failed: ${message}`);
+  }
+};

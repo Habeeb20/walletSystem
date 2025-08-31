@@ -14,22 +14,30 @@ const userSchema = new mongoose.Schema({
   emailVerificationCode: { type: String }, 
   biometricKeyId: { type: String },
   paystackCustomerId: { type: String },
-  wallet: {
+wallet: {
     balance: { type: Number, default: 0 },
-    transactions: [{
-      type: { type: String, enum: ['credit', 'debit', 'bill_payment'] },
-      amount: Number,
-      provider: { type: String, default: 'Paystack' },
-      reference: String,
-      status: { type: String, enum: ['pending', 'success', 'failed'] },
-      createdAt: { type: Date, default: Date.now }
-    }]
-  }, 
+    transactions: [
+      {
+        type: { type: String, enum: ['credit', 'debit'] },
+        amount: Number,
+        provider: String,
+        reference: String,
+        status: { type: String, enum: ['pending', 'success', 'failed'] },
+        details: mongoose.Schema.Types.Mixed,
+        timestamp: { type: Date, default: Date.now },
+      },
+    ],
+  },
   virtualAccountDetails: {
   account_number: { type: String },
   account_name: { type: String },
   bank: { type: String },
 },
+paylonyVirtualAccountDetails: {
+    account_number: { type: String },
+    account_name: { type: String },
+    bank: { type: String },
+  },
 
 });
 
