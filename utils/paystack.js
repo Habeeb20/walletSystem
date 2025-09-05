@@ -112,28 +112,20 @@ export const getCustomer = async (customer_code) => {
   }
 };
 
-// export const createVirtualAccount = async (customerCode, email, preferredBank = 'wema-bank') => {
-//   try {
-//     if (!customerCode || !email) {
-//       throw new Error('Customer code and email are required');
-//     }
 
-//     const response = await pRetry(
-//       () => paystack.dedicatedAccount?.create({
-//         customer: customerCode,
-//         preferred_bank: preferredBank,
-//         email,
-//       }),
-//       { retries: 3, minTimeout: 1000 }
-//     );
-//     console.log('Virtual account created:', response.data);
-//     return response.data;
+// const getCustomer = async (paystackCustomerId) => {
+//   try {
+//     const response = await axios.get(`https://api.paystack.co/customer/${paystackCustomerId}`, {
+//       headers: { Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}` },
+//     });
+//     return response.data.data; // Adjust based on Paystack API response
 //   } catch (error) {
-//     const message = error.response?.data?.message || error.message;
-//     console.error('Virtual account creation error:', error.response?.data || error);
-//     throw new Error(`Virtual account creation failed: ${message}`);
+//     console.error('Paystack customer fetch error:', error);
+//     throw new Error('Failed to fetch Paystack customer');
 //   }
 // };
+
+
 
 export const createVirtualAccount = async (customerCode, email, preferredBank = 'wema-bank') => {
   try {

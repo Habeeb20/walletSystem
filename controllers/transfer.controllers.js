@@ -4,16 +4,20 @@ import User from '../models/user/userModel.js';
 
 
 
-
-
 export const transferFunds = async (req, res) => {
   try {
     const { recipientEmail, amount } = req.body;
     const sender = await User.findOne({ email: req.user.email });
     const recipient = await User.findOne({ email: recipientEmail });
 
-    if (!sender || !recipient || sender.wallet.balance < amount) {
-      return res.status(400).json({ error: 'Insufficient balance or invalid recipient' });
+    if (!sender || !recipient) {
+      return res.status(400).json({ error: 'Invalid recipient or sender not found' });
+    }
+    if (!amount || amount <= 0) {
+      return res.status(400).json({ error: 'Please enter a valid amount' });
+    }
+    if (sender.wallet.balance < amount) {
+      return res.status(400).json({ error: 'Insufficient balance. Please fund your wallet' });
     }
 
     sender.wallet.balance -= amount;

@@ -1,19 +1,39 @@
 import User from '../models/user/userModel.js';
 import axios from 'axios';
-import { buyAirtime } from '../utils/flutterwave.js';
+
+
+export const fetchWalletBalance = async (req, res) => {
+  try {
+    const user = await User.findOne({ email: req.user.email });
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    res.json({ balance: user.wallet.balance });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch wallet balance' });
+  }
+};
 
 export const buyAirtime = async (req, res) => {
   try {
-    const { phone, amount, network } = req.body;
+    const { network, amount, phone } = req.body;
     const user = await User.findOne({ email: req.user.email });
-    if (!user || user.wallet.balance < amount) {
-      return res.status(400).json({ error: 'Insufficient balance or user not found' });
+    if(!user){
+      return res.status(400).json({ error: ' user not found'})
+    }
+    if ( user.wallet.balance < amount) {
+      return res.status(400).json({ error: 'Insufficient balance, please fund your wallet ' });
     }
 
-    const response = await buyAirtime(phone, amount, network, process.env.FLUTTERWAVE_SECRET_KEY);
+    // Simulate VTU API call (replace with actual API)
+    const vtuResponse = await axios.post(
+      'https://api.vtu-provider.com/airtime-recharge', // Replace with real VTU API
+      { network, amount, phone },
+      { headers: { Authorization: `Bearer ${process.env.VTU_API_KEY}` } }
+    );
 
-    if (response.status !== 'success') {
-      throw new Error(response.message || 'Airtime purchase failed');
+    if (vtuResponse.data.status !== 'success') {
+      return res.status(500).json({ error: 'Airtime recharge failed' });
     }
 
     user.wallet.balance -= amount;
@@ -26,58 +46,18 @@ export const buyAirtime = async (req, res) => {
           'wallet.transactions': {
             type: 'debit',
             amount,
-            provider: 'Flutterwave',
-            reference: response.data.transaction_id || `AIRTIME_${Date.now()}`,
+            provider: 'VTU',
+            reference: vtuResponse.data.transaction_id || `AIRTIME_${Date.now()}`,
             status: 'success',
-            details: { phone, network },
+            details: { network, phone },
+            timestamp: new Date(),
           },
         },
       }
     );
 
-    res.json({ message: 'Airtime purchased successfully', details: response.data });
+    res.json({ message: 'Airtime recharge successful', balance: user.wallet.balance });
   } catch (error) {
-    res.status(500).json({ error: `Airtime purchase failed: ${error.message}` });
+    res.status(500).json({ error: `Airtime recharge failed: ${error.message}` });
   }
 };
-
-// export const buyAirtime = async (req, res) => {
-
-  
-//   try {
-//     const { phone, amount, network } = req.body;
-//     const user = await User.findOne({ email: req.user.email });
-//     if (!user || user.wallet.balance < amount) {
-//       return res.status(400).json({ error: 'Insufficient balance or user not found' });
-//     }
-
-//     const response = await axios.post(
-//       'https://api.provider.com/vtu/airtime', // Replace with actual VTU API endpoint
-//       { phone, amount, network },
-//       { headers: { Authorization: `Bearer ${process.env.VTU_API_KEY}` } }
-//     );
-
-//     user.wallet.balance -= amount;
-//     await user.save();
-
-//     await User.updateOne(
-//       { email: user.email },
-//       {
-//         $push: {
-//           'wallet.transactions': {
-//             type: 'debit',
-//             amount,
-//             provider: 'Airtime',
-//             reference: `AIRTIME_${Date.now()}`,
-//             status: 'success',
-//             details: { phone, network },
-//           },
-//         },
-//       }
-//     );
-
-//     res.json({ message: 'Airtime purchased successfully', details: response.data });
-//   } catch (error) {
-//     res.status(500).json({ error: `Airtime purchase failed: ${error.message}` });
-//   }
-// };

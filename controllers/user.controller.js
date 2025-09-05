@@ -1,7 +1,7 @@
 import User from "../models/user/userModel.js";
 import { generateUsernameSuggestions, hashPassword, verifyPassword, generateJwtToken, generateWebAuthnRegistrationOptions, verifyWebAuthnAuthentication, validateEmailVerificationInput, resetPasswordLimiter, generate4DigitCode, sendEmailVerificationCode, validationResetPasswordInput } from "../utils/security.js";
 import { createCustomer, getCustomer, createVirtualAccount, createPaylonyVirtualAccount } from "../utils/paystack.js";
-
+import axios from "axios"
 import dotenv from "dotenv"
 
 dotenv.config();
@@ -297,9 +297,30 @@ export const resetPassword = async(req, res) => {
 
 
 
+// export const getCustomerDetails = async (req, res) => {
+//   try {
+//     const user = await User.findOne({ email: req.user.email }).select('paystackCustomerId first_name last_name email phone  virtualAccountDetails wallet');
+//     if (!user) {
+//       return res.status(404).json({ error: 'User not found' });
+//     }
+//     if (!user.paystackCustomerId) {
+//       return res.status(400).json({ error: 'No Paystack customer associated with this user' });
+//     }
+
+//     const customer = await getCustomer(user.paystackCustomerId);
+//     const { first_name, last_name, email, phone, virtualAccountDetails, wallet } = customer;
+//     res.json({ first_name, last_name, email, phone, virtualAccountDetails, wallet });
+//   } catch (error) {
+//     console.error('Get customer details error:', error);
+//     res.status(500).json({ error: `Failed to fetch customer details: ${error.message}` });
+//   }
+// };
+
 export const getCustomerDetails = async (req, res) => {
   try {
-    const user = await User.findOne({ email: req.user.email }).select('paystackCustomerId first_name last_name email phone  virtualAccountDetails wallet');
+    const user = await User.findOne({ email: req.user.email }).select(
+      'paystackCustomerId first_name last_name email phone virtualAccountDetails wallet'
+    );
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
@@ -307,9 +328,20 @@ export const getCustomerDetails = async (req, res) => {
       return res.status(400).json({ error: 'No Paystack customer associated with this user' });
     }
 
-    const customer = await getCustomer(user.paystackCustomerId);
-    const { first_name, last_name, email, phone, virtualAccountDetails, wallet } = customer;
-    res.json({ first_name, last_name, email, phone, virtualAccountDetails, wallet });
+    // Fetch Paystack customer data
+    const paystackCustomer = await getCustomer(user.paystackCustomerId);
+
+    // Merge MongoDB and Paystack data
+    const responseData = {
+      first_name: paystackCustomer.first_name || user.first_name,
+      last_name: paystackCustomer.last_name || user.last_name,
+      email: paystackCustomer.email || user.email,
+      phone: paystackCustomer.phone || user.phone,
+      virtualAccountDetails: user.virtualAccountDetails || {},
+      wallet: user.wallet || {},
+    };
+
+    res.json({ data: responseData }); // Match frontend expectation
   } catch (error) {
     console.error('Get customer details error:', error);
     res.status(500).json({ error: `Failed to fetch customer details: ${error.message}` });
@@ -351,53 +383,60 @@ export const createUserVirtualAccount = async (req, res) => {
 
 
 
-
-
-
-
-
-
 export const createPaylonyUserVirtualAccount = async (req, res) => {
+  const { customerId, firstname, lastname, address, gender, email, phone, dob } = req.body;
+
   try {
-    const { dob, address, gender } = req.body;
-    if (!dob || !address || !gender) {
-      return res.status(400).json({ error: 'DOB, address, and gender are required' });
+    console.log('Received Request to Create Paylony Account:', req.body);
+   
+    const paylonyResponse = await axios.post(
+      "https://api.paylony.com/api/v1/create_account",
+      {
+        customer_id: customerId,
+        firstname,
+        lastname,
+        address,
+        gender,
+        email,
+        phone,
+        dob,
+        currency: 'NGN',
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.PAYLONY_SECRET_KEY}`,
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+
+    console.log('Paylony API Raw Response:', paylonyResponse.data); // Log the full response
+    console.log('Paylony API Status:', paylonyResponse.status); //
+
+    const virtualAccount = paylonyResponse.data; 
+    if (!virtualAccount || !virtualAccount.account_number || !virtualAccount.account_name || !virtualAccount.bank) {
+      throw new Error('Invalid response from Paylony API');
     }
 
-    const user = await User.findOne({ email: req.user.email }).select('email first_name last_name phone');
-    if (!user) {
-      return res.status(404).json({ error: 'User not found' });
+    const user = await User.findOne({ email: req.user.email });
+    if (user) {
+      user.paylonyVirtualAccountDetails = { 
+        account_number: virtualAccount.account_number,
+        account_name: virtualAccount.account_name,
+        bank: virtualAccount.bank,
+      };
+      await user.save();
+      console.log('User Saved with Paylony Details:', user.paylonyVirtualAccountDetails);
+    } else {
+      throw new Error('User not found');
     }
 
-    const paylonySecretKey = "sk_live_n7zbakvo4qtbdwb2usjcni2if6qpnhsl1vkvsoo";
-    if (!paylonySecretKey) {
-      return res.status(500).json({ error: 'Paylony secret key not configured' });
-    }
-
-    const virtualAccount = await createPaylonyVirtualAccount({
-      email:user.email,
-      dob,
-      address,
-      gender,
-      firstname:user.first_name,
-      lastname:user.last_name,
-      phone:user.phone,
-      paylonySecretKey
-  });
-
-  console.log(virtualAccount, "your account")
-    user.paylonyVirtualAccountDetails = virtualAccount;
-    await user.save();
-
-    res.json({ message: 'Paylony virtual account created', details: virtualAccount });
+    res.json({ success: true, virtual_account: user.paylonyVirtualAccountDetails });
   } catch (error) {
-    console.error('Create Paylony virtual account error:', error);
-    res.status(500).json({ error: error.message });
+    console.error('Paylony virtual account creation error:', error.response?.data || error.message);
+    res.status(500).json({ error: error.response?.data?.message || 'Failed to create virtual account. Please check your credentials or contact support.' });
   }
 };
-
-
-
 
 export const checkVirtualAccount = async (req, res) => {
   try {

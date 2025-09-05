@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 
 
 
@@ -9,6 +10,8 @@ import { useNavigate } from 'react-router-dom';
 import ProfilePage from '../SideBars/Profile';
 import AirtimePage from '../SideBars/AirtimePage';
 import DashboardContent from '../SideBars/DashboardContent';
+import TransferPage from '../SideBars/TransferPage';
+import DataPage from '../SideBars/DataPage';
 
 
 const Transfer = () => <div>Transfer Component</div>;
@@ -28,13 +31,27 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const { loading, dashboardData } = useSelector((state) => state.auth);
   const token = localStorage.getItem("token");
+  
     const [activeMenu, setActiveMenu] = useState('Dashboard');
-
+console.log(token, "your token")
 
 
   useEffect(() => {
-    dispatch(fetchDashboard());
-  }, [dispatch]);
+  const token = localStorage.getItem('token');
+  console.log('Token used:', token);
+  if (token) {
+    dispatch(fetchDashboard(token));
+  }
+}, [dispatch, token]);
+
+
+useEffect(() => {
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.get('status') === 'success') {
+    dispatch(fetchDashboard(token));
+    window.history.replaceState({}, document.title, window.location.pathname); 
+  }
+}, [dispatch, token]);
 
   useEffect(() => {
     if (!token) {
@@ -105,14 +122,14 @@ const Dashboard = () => {
         </a>
         <a
           href="#"
-          onClick={() => handleMenuClick(<Transfer />, 'Transfer')}
+          onClick={() => handleMenuClick(<TransferPage />, 'Transfer')}
           className={activeMenu === 'Transfer' ? activeClasses : baseClasses}
         >
           <span className="mr-2">💸</span>Transfer
         </a>
         <a
           href="#"
-          onClick={() => handleMenuClick(<Data />, 'Data')}
+          onClick={() => handleMenuClick(<DataPage />, 'Data')}
           className={activeMenu === 'Data' ? activeClasses : baseClasses}
         >
           <span className="mr-2">📊</span>Data
