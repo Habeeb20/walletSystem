@@ -84,7 +84,7 @@ const HeroSection = () => {
           </motion.div>
         </motion.div>
         {/* Mobile Device on the Right */}
-        <div className="w-full md:w-1/2 flex justify-center md:justify-end pr-0 md:pr-40">
+        <div className="w-full md:w-1/2 flex  mt-9 justify-center md:justify-end pr-0 md:pr-40">
           <motion.div
             className="phone fadeIn"
             initial={{ opacity: 0, y: 20 }}

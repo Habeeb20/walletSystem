@@ -32,7 +32,7 @@ const Airtime = () => {
      
       return;
     }
-     if(phone.length < 11){
+     if(phone.length < 11 || phone.length > 11){
            enqueueSnackbar(' enter a valid phone number', { variant: 'error' }); 
       }
 

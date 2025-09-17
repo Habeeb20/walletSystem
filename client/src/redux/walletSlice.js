@@ -58,7 +58,11 @@ const walletSlice = createSlice({
     walletBalance: 0,
     token: localStorage.getItem('token'),
   },
-  reducers: {},
+  reducers: {
+    updateWalletBalance(state, action) {
+      state.walletBalance = action.payload.amount;
+    },
+    },
   extraReducers: (builder) => {
     builder
       .addCase(fetchWalletBalance.pending, (state) => {
@@ -102,6 +106,9 @@ const walletSlice = createSlice({
 });
 
 export default walletSlice.reducer;
+
+
+
 
 
 

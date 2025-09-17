@@ -1,1 +1,1 @@
-export const APP_NAME = "Paydow";
+export const APP_NAME = "Flexipay";

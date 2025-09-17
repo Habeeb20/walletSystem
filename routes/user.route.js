@@ -1,6 +1,6 @@
 import express from "express"
 import { authenticateToken, loginRateLimiter, resetPasswordLimiter, validateRegisterInput } from "../utils/security.js"
-import { checkVirtualAccount, createPaylonyUserVirtualAccount, createUserVirtualAccount,  fetchDashboard, getCustomerDetails, initiateResetPassword, loginWithBiometrics, loginWithPassword, register, registerBiometrics, resetPassword, selectUsername, verifyBiometrics, verifyEmail } from "../controllers/user.controller.js"
+import { checkVirtualAccount, createPaylonyUserVirtualAccount, createUserVirtualAccount,   fetchDashboard, getCustomerDetails, initiateResetPassword, loginWithBiometrics, loginWithPassword, register, registerBiometrics, resetPassword, selectUsername, verifyBiometrics, verifyEmail } from "../controllers/user.controller.js"
 
 const router = express.Router()
 
@@ -17,6 +17,6 @@ router.get('/customer', authenticateToken, getCustomerDetails)
 router.post('/create-virtual-account', authenticateToken, createUserVirtualAccount)
 router.post('/create-paylony-virtual-account', authenticateToken,  createPaylonyUserVirtualAccount)
 router.get('/check-virtual-account', authenticateToken, checkVirtualAccount);
-
+// router.get("wallet-balance", authenticateToken, fetchAndUpdateWalletBalance)
 
 export default router

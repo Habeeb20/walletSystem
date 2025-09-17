@@ -1,16 +1,18 @@
 
-// import React, { useEffect, useState } from 'react';
+
+
+// import { useEffect, useState } from 'react';
 // import { useDispatch, useSelector } from 'react-redux';
-// import { fetchCustomerDetails, createPaylonyVirtualAccount, checkVirtualAccount } from '../../redux/authSlice';
+// import { fetchCustomerDetails, createPaylonyVirtualAccount, checkVirtualAccount, fetchPaylonyAccounts } from '../../redux/authSlice';
 // import { useSnackbar } from 'notistack';
 // import WalletLoadingAnimation from '../../resources/wallet';
 
 // const Profile = () => {
 //   const dispatch = useDispatch();
-//   const { loading, customerDetails, error, virtualAccountCompleted } = useSelector((state) => state.auth);
+//   const { loading, customerDetails, error, virtualAccountCompleted, paylonyAccounts } = useSelector((state) => state.auth);
 //   const token = localStorage.getItem('token');
-//   const [showVirtualAccountForm, setShowVirtualAccountForm] = useState(false); // For Paystack
-//   const [showPaylonyAccountForm, setShowPaylonyAccountForm] = useState(false); // For Paylony
+//   const [showVirtualAccountForm, setShowVirtualAccountForm] = useState(false);
+//   const [showPaylonyAccountForm, setShowPaylonyAccountForm] = useState(false);
 //   const [virtualAccountData, setVirtualAccountData] = useState({
 //     dob: '',
 //     address: '',
@@ -21,17 +23,18 @@
 //     address: '',
 //     gender: '',
 //   });
-//   const [initialCustomerDetails, setInitialCustomerDetails] = useState(null); // To store initial state
+//   const [initialCustomerDetails, setInitialCustomerDetails] = useState(null);
 
 //   const { enqueueSnackbar } = useSnackbar();
 
 //   console.log('Virtual Account Completed:', virtualAccountCompleted);
 //   console.log('Customer Details:', customerDetails);
+//   console.log('Paylony Accounts:', paylonyAccounts);
 //   console.log('Loading State:', loading);
-//     console.log("details from env", import.meta.env)
+//   console.log('ENV Details:', import.meta.env);
+
 //   useEffect(() => {
 //     const timer = setTimeout(() => {
-    
 //       if (token) {
 //         dispatch(fetchCustomerDetails()).then((action) => {
 //           console.log('Fetched Customer Details:', action.payload);
@@ -39,6 +42,9 @@
 //         });
 //         dispatch(checkVirtualAccount(token)).then((action) => {
 //           console.log('Check Virtual Account Result:', action.payload);
+//         });
+//         dispatch(fetchPaylonyAccounts(token)).then((action) => {
+//           console.log('Fetched Paylony Accounts:', action.payload);
 //         });
 //       } else {
 //         console.warn('Token not available, delaying fetch...');
@@ -73,6 +79,7 @@
 //       setShowVirtualAccountForm(false);
 //       dispatch(fetchCustomerDetails());
 //       dispatch(checkVirtualAccount(token));
+//       dispatch(fetchPaylonyAccounts(token));
 //       enqueueSnackbar('Virtual account created successfully', { variant: 'success' });
 //     } catch (error) {
 //       console.error('Failed to create virtual account:', error);
@@ -84,40 +91,39 @@
 //     console.log('Paylony Button Clicked');
 //     setShowPaylonyAccountForm(true);
 //   };
-
-//   const handlePaylonyAccountSubmit = async (e) => {
-//     e.preventDefault();
-//     if (!paylonyAccountData.dob || !paylonyAccountData.address || !paylonyAccountData.gender) {
-//       enqueueSnackbar('Please fill in all fields (DOB, Address, Gender)', { variant: 'error' });
-//       return;
+// const handlePaylonyAccountSubmit = async (e) => {
+//   e.preventDefault();
+//   if (!paylonyAccountData.dob || !paylonyAccountData.address || !paylonyAccountData.gender) {
+//     enqueueSnackbar('Please fill in all fields (DOB, Address, Gender)', { variant: 'error' });
+//     return;
+//   }
+//   try {
+//     await dispatch(
+//       createPaylonyVirtualAccount({
+//         token,
+//         customerId: customerDetails?.id,
+//         firstname: customerDetails?.first_name || '',
+//         lastname: customerDetails?.last_name || '',
+//         address: paylonyAccountData.address,
+//         gender: paylonyAccountData.gender,
+//         email: customerDetails?.email || '',
+//         phone: customerDetails?.phone || '',
+//         dob: paylonyAccountData.dob,
+//       })
+//     ).unwrap();
+//     setShowPaylonyAccountForm(false);
+//     dispatch(fetchCustomerDetails());
+//     dispatch(checkVirtualAccount(token));
+//     dispatch(fetchPaylonyAccounts(token)); // Ensure this is updated to use backend
+//     enqueueSnackbar('Paylony virtual account created successfully', { variant: 'success' });
+//   } catch (error) {
+//     console.error('Failed to create Paylony virtual account:', error.response?.data || error.message);
+//     if (initialCustomerDetails) {
+//       dispatch({ type: 'auth/fetchCustomerDetails/fulfilled', payload: { data: initialCustomerDetails } });
 //     }
-//     try {
-//       await dispatch(
-//         createPaylonyVirtualAccount({
-//           token,
-//           customerId: customerDetails?.id,
-//           firstname: customerDetails?.first_name || '',
-//           lastname: customerDetails?.last_name || '',
-//           address: paylonyAccountData.address,
-//           gender: paylonyAccountData.gender,
-//           email: customerDetails?.email || '',
-//           phone: customerDetails?.phone || '',
-//           dob: paylonyAccountData.dob,
-//         })
-//       ).unwrap();
-//       setShowPaylonyAccountForm(false);
-//       dispatch(fetchCustomerDetails());
-//       dispatch(checkVirtualAccount(token));
-//       enqueueSnackbar('Paylony virtual account created successfully', { variant: 'success' });
-//     } catch (error) {
-//       console.error('Failed to create Paylony virtual account:', error.response?.data || error.message);
-//       if (initialCustomerDetails) {
-//         dispatch({ type: 'auth/fetchCustomerDetails/fulfilled', payload: { data: initialCustomerDetails } });
-//       }
-//       enqueueSnackbar('Failed to create Paylony virtual account. Please check your credentials or contact support.', { variant: 'error' });
-//     }
-//   };
-
+//     enqueueSnackbar('Failed to create Paylony virtual account. Please check your credentials or contact support.', { variant: 'error' });
+//   }
+// };
 //   const progressSteps = [
 //     { id: 'account', label: 'Create Account', completed: true },
 //     { id: 'customer', label: 'Create Customer Account', completed: true },
@@ -126,8 +132,8 @@
 
 //   return (
 //     <div className="min-h-screen bg-gradient-to-b from-white to-indigo-100 p-6">
-//       {(loading && showPaylonyAccountForm) && <WalletLoadingAnimation loading={loading} />} {/* For Paylony loading */}
-//       {loading && <WalletLoadingAnimation loading={loading} />} {/* For other loading states */}
+//       {(loading && showPaylonyAccountForm) && <WalletLoadingAnimation loading={loading} />}
+//       {loading && <WalletLoadingAnimation loading={loading} />}
 //       <div className="max-w-3xl mx-auto">
 //         {/* Progress Bar */}
 //         <div className="mb-8">
@@ -215,13 +221,35 @@
 //                   </div>
 //                 </div>
 //               )}
+//               {paylonyAccounts.length > 0 && (
+//                 <div>
+//                   <h3 className="text-lg font-semibold text-gray-700 mt-4">Paylony Virtual Account Details</h3>
+//                   {paylonyAccounts.map((account, index) => (
+//                     <div key={index} className="space-y-2">
+//                       <div className="flex items-center">
+//                         <span className="w-32 text-gray-600 font-medium">Account Number:</span>
+//                         <span className="text-gray-800">{account.account_number || 'N/A'}</span>
+//                       </div>
+//                       <div className="flex items-center">
+//                         <span className="w-32 text-gray-600 font-medium">Account Name:</span>
+//                         <span className="text-gray-800">{account.account_name || 'N/A'}</span>
+//                       </div>
+//                       <div className="flex items-center">
+//                         <span className="w-32 text-gray-600 font-medium">Bank:</span>
+//                         <span className="text-gray-800">{account.bank || 'N/A'}</span>
+//                       </div>
+//                       {index < paylonyAccounts.length - 1 && <hr className="my-2 border-gray-200" />}
+//                     </div>
+//                   ))}
+//                 </div>
+//               )}
 //             </div>
 //           ) : (
 //             <div className="text-center text-gray-500">No details available</div>
 //           )}
 //         </div>
 
-//         {/* Existing Virtual Account Button (Disabled if Paystack is created) */}
+//         {/* Existing Virtual Account Button */}
 //         <button
 //           onClick={handleCreateVirtualAccount}
 //           className="mt-4 bg-gradient-to-r from-green-900 to-green-700 text-white p-2 rounded hover:bg-green-600 transition duration-300"
@@ -230,7 +258,7 @@
 //           Create Virtual Account
 //         </button>
 
-//         {/* New Paylony Virtual Account Button (Green Gradient) */}
+//         {/* Paylony Virtual Account Button */}
 //         <button
 //           onClick={handleCreatePaylonyAccount}
 //           className="mt-4 ml-4 bg-gradient-to-r from-green-900 to-green-700 text-white p-2 rounded hover:bg-green-600 transition duration-300"
@@ -281,9 +309,9 @@
 //                     required
 //                   >
 //                     <option value="">Select Gender</option>
-//                     <option value="male">Male</option>
-//                     <option value="female">Female</option>
-//                     <option value="other">Other</option>
+//                     <option value="Male">Male</option>
+//                     <option value="Female">Female</option>
+                
 //                   </select>
 //                 </div>
 //                 <button
@@ -298,7 +326,7 @@
 //           </div>
 //         )}
 
-//         {/* New Paylony Virtual Account Creation Modal */}
+//         {/* Paylony Virtual Account Creation Modal */}
 //         {showPaylonyAccountForm && (
 //           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
 //             <div className="bg-white p-6 rounded-lg shadow-lg w-11/12 max-w-md relative">
@@ -337,8 +365,8 @@
 //                     <label className="inline-flex items-center">
 //                       <input
 //                         type="radio"
-//                         value="male"
-//                         checked={paylonyAccountData.gender === 'male'}
+//                         value="Male"
+//                         checked={paylonyAccountData.gender === 'Male'}
 //                         onChange={(e) => setPaylonyAccountData({ ...paylonyAccountData, gender: e.target.value })}
 //                         className="form-radio text-blue-600"
 //                         required
@@ -348,8 +376,8 @@
 //                     <label className="inline-flex items-center">
 //                       <input
 //                         type="radio"
-//                         value="female"
-//                         checked={paylonyAccountData.gender === 'female'}
+//                         value="Female"
+//                         checked={paylonyAccountData.gender === 'Female'}
 //                         onChange={(e) => setPaylonyAccountData({ ...paylonyAccountData, gender: e.target.value })}
 //                         className="form-radio text-blue-600"
 //                         required
@@ -386,6 +414,7 @@
 // };
 
 // export default Profile;
+
 
 
 import { useEffect, useState } from 'react';
@@ -591,7 +620,7 @@ const handlePaylonyAccountSubmit = async (e) => {
                 <span className="w-32 text-gray-600 font-medium">Phone Number:</span>
                 <span className="text-gray-800">{customerDetails?.phone || 'N/A'}</span>
               </div>
-              {customerDetails.virtualAccountDetails && (
+              {/* {customerDetails.virtualAccountDetails && (
                 <div>
                   <h3 className="text-lg font-semibold text-gray-700 mt-4">Virtual Account Details</h3>
                   <div className="flex items-center">
@@ -608,28 +637,43 @@ const handlePaylonyAccountSubmit = async (e) => {
                   </div>
                 </div>
               )}
-              {paylonyAccounts.length > 0 && (
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-700 mt-4">Paylony Virtual Account Details</h3>
-                  {paylonyAccounts.map((account, index) => (
-                    <div key={index} className="space-y-2">
-                      <div className="flex items-center">
-                        <span className="w-32 text-gray-600 font-medium">Account Number:</span>
-                        <span className="text-gray-800">{account.account_number || 'N/A'}</span>
-                      </div>
-                      <div className="flex items-center">
-                        <span className="w-32 text-gray-600 font-medium">Account Name:</span>
-                        <span className="text-gray-800">{account.account_name || 'N/A'}</span>
-                      </div>
-                      <div className="flex items-center">
-                        <span className="w-32 text-gray-600 font-medium">Bank:</span>
-                        <span className="text-gray-800">{account.bank || 'N/A'}</span>
-                      </div>
-                      {index < paylonyAccounts.length - 1 && <hr className="my-2 border-gray-200" />}
-                    </div>
-                  ))}
-                </div>
-              )}
+          */}
+
+          {customerDetails.virtualAccountDetails && (
+      <div>
+        <h3 className="text-lg font-semibold text-gray-700 mt-4">Virtual Account Details</h3>
+        <div className="flex items-center">
+          <span className="w-32 text-gray-600 font-medium">Account Number:</span>
+          <span className="text-gray-800">{customerDetails.virtualAccountDetails.account_number}</span>
+        </div>
+        <div className="flex items-center">
+          <span className="w-32 text-gray-600 font-medium">Account Name:</span>
+          <span className="text-gray-800">{customerDetails.virtualAccountDetails.account_name}</span>
+        </div>
+        <div className="flex items-center">
+          <span className="w-32 text-gray-600 font-medium">Bank:</span>
+          <span className="text-gray-800">{customerDetails.virtualAccountDetails.bank}</span>
+        </div>
+      </div>
+    )}
+    {customerDetails.paylonyVirtualAccountDetails && Object.keys(customerDetails.paylonyVirtualAccountDetails).length > 0 && (
+      <div>
+        <h3 className="text-lg font-semibold text-gray-700 mt-4">Paylony Virtual Account Details</h3>
+        <div className="flex items-center">
+          <span className="w-32 text-gray-600 font-medium">Account Number:</span>
+          <span className="text-gray-800">{customerDetails.paylonyVirtualAccountDetails.account_number || 'N/A'}</span>
+        </div>
+        <div className="flex items-center">
+          <span className="w-32 text-gray-600 font-medium">Account Name:</span>
+          <span className="text-gray-800">{customerDetails.paylonyVirtualAccountDetails.account_name || 'N/A'}</span>
+        </div>
+        <div className="flex items-center">
+          <span className="w-32 text-gray-600 font-medium">Bank:</span>
+          <span className="text-gray-800">{customerDetails.paylonyVirtualAccountDetails.bank || 'NET microfinance bank'}</span>
+        </div>
+      </div>
+    )}
+  
             </div>
           ) : (
             <div className="text-center text-gray-500">No details available</div>

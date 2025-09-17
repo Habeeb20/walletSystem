@@ -2,13 +2,20 @@
 import React, { useState } from 'react';
 import { APP_NAME } from '../utils/projectName';
 
+
+import im from "../../assets/wallet2.png"
 const Header = () => {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
     <header className="bg-gradient-to-r from-green-900 to-green-700 text-white p-3 flex justify-between items-center fixed w-full z-10 shadow-lg transition-all duration-300">
       <a href='/'>
-               <div className="text-3xl font-bold tracking-wide text-green-200">{APP_NAME}</div>
+
+<img 
+className="h-12 font-bold tracking-wide text-green-200"
+  src={im}
+/>
+               {/* <div className="text-3xl font-bold tracking-wide text-green-200">{APP_NAME}</div> */}
       </a>
  
       <nav className="hidden md:flex space-x-6">

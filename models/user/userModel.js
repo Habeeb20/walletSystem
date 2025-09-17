@@ -14,8 +14,7 @@ const userSchema = new mongoose.Schema({
   emailVerificationCode: { type: String }, 
   biometricKeyId: { type: String },
   paystackCustomerId: { type: String },
-wallet: {
-    balance: { type: Number, default: 0 },
+wallet: { balance: Number, transactions: Array },
     transactions: [
       {
         type: { type: String, enum: ['credit', 'debit'] },
@@ -27,7 +26,7 @@ wallet: {
         timestamp: { type: Date, default: Date.now },
       },
     ],
-  },
+  
   virtualAccountDetails: {
   account_number: { type: String },
   account_name: { type: String },
@@ -36,7 +35,14 @@ wallet: {
 paylonyVirtualAccountDetails: {
     account_number: { type: String },
     account_name: { type: String },
-    bank: { type: String },
+    bank_name: { type: String },
+    provider: { type: String,  },
+    domain: { type: String,  },
+    reference: { type: String,  },
+    assignment: { type: String, },
+    status: { type: String,  },
+    mandate: { reference: String, status: String, createdAt: Date },
+
   },
 
 });
