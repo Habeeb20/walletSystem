@@ -8,6 +8,7 @@ import connectDB from "./db.js";
 import jwt from "jsonwebtoken"
 import { configureHelmet } from "./utils/security.js";
 import router from "./routes/user.route.js";
+import airtimerouter from "./routes/airtime.route.js";
 import walletrouter from "./routes/wallet.route.js";
 
 
@@ -59,6 +60,7 @@ app.get("/", (req, res) => {
 
 app.use("/api/auth", router)
 app.use("/api/wallet", walletrouter)
+app.use("/api/airtime", airtimerouter)
 // Error handling
 app.use((err, req, res, next) => {
   console.error("Error:", err.stack);

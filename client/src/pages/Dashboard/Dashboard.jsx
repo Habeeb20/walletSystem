@@ -14,6 +14,8 @@ import TransferPage from '../SideBars/TransferPage';
 import DataPage from '../SideBars/DataPage';
 
 
+import im from "../../assets/wallet2.png"
+
 const Transfer = () => <div>Transfer Component</div>;
 const Data = () => <div>Data Component</div>;
 const Airtime = () => <div> <AirtimePage /> </div>;
@@ -95,7 +97,15 @@ useEffect(() => {
       )}
       {/* Custom Navbar for Dashboard */}
       <nav className="fixed top-0 left-0 w-full bg-gradient-to-r from-green-900 to-green-700 text-white p-4 flex justify-between items-center z-20 shadow-lg md:h-16">
-        <div className="text-xl font-semibold">Dashboard</div>
+            <a href='/'>
+      
+      <img 
+      className="h-12 font-bold tracking-wide text-green-200"
+        src={im}
+      />
+                     {/* <div className="text-3xl font-bold tracking-wide text-green-200">{APP_NAME}</div> */}
+            </a>
+        {/* <div className="text-xl font-semibold">Dashboard</div> */}
         <div className="text-sm text-green-100 font-bold"> {dashboardData?.user?.fullName || localStorage.getItem('userFullName') || ''}</div>
         <div className="md:hidden">
           <button onClick={() => { setIsMenuOpen(!isMenuOpen); console.log("Toggle menu:", !isMenuOpen); }} className="text-white focus:outline-none z-30">
