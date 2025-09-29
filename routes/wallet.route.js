@@ -1,6 +1,6 @@
 import express from "express";
 import { authenticateToken } from "../utils/security.js";
-import { fetchAndUpdateWalletBalance, fetchPaylonyAccounts, fundWallet, handlePaylonyWebhook, manualUpdateWallet, PaylonyWebhook, walletCallback } from "../controllers/wallet.controller.js";
+import { checkBalancePaystack, fetchAndUpdateWalletBalance, fetchPaylonyAccounts, fundWallet, handlePaylonyWebhook,PaylonyWebhook, walletCallback } from "../controllers/wallet.controller.js";
 import { buyAirtime, fetchWalletBalance } from "../controllers/airtime.controllers.js";
 import { transferFunds } from "../controllers/transfer.controllers.js";
 
@@ -17,8 +17,9 @@ router.get('/fetch-paylony-accounts', authenticateToken, fetchPaylonyAccounts)
 router.get('/fetch-paylony-transactions', authenticateToken, fetchPaylonyAccounts)
 router.post('/webhook/paylony', handlePaylonyWebhook);
 router.get('/fetch-and-update-balance/:reference/:provider', authenticateToken, fetchAndUpdateWalletBalance);
-router.post('/manual-update', manualUpdateWallet);
+
 router.post('/webhook/paylony', PaylonyWebhook);
+router.get('/check-balance', authenticateToken, checkBalancePaystack);
 
 
 export default router;

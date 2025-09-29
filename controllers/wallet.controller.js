@@ -4,9 +4,13 @@ import { initializePayment, verifyPayment } from '../utils/paystack.js';
 import axios from 'axios';
 import fetch from "node-fetch"
 import crypto from "crypto"
+
+import pkg from 'uuid';
+
+import mongoose from 'mongoose';
 dotenv.config();
 
-
+const { v4: uuidv4 } = pkg;
 
 
 export const payBill = async (req, res) => {
@@ -267,72 +271,6 @@ export const PaylonyWebhook = async (req, res) => {
   }
 };
 
-// async function fetchCustomerBalance(accountNumber, reference) {
-//   try {
- 
-//     const response = await fetch(`${PAYLONY_API_URL}/accounts/${accountNumber}/balance`, {
-//       method: 'GET',
-//       headers: {
-//         'Authorization': `Bearer ${process.env.PAYLONY_SECRET_KEY}`,
-//         'Content-Type': 'application/json',
-//       },
-//     });
-
-//     if (response.ok) {
-//       const { success, data } = await response.json();
-//       if (success) return data.balance;
-//     }
-
-//     const txResponse = await fetch(`${PAYLONY_API_URL}/fetch_transfer_details/${reference}`, {
-//       method: 'GET',
-//       headers: {
-//         'Authorization': `Bearer ${process.env.PAYLONY_SECRET_KEY}`,
-//         'Content-Type': 'application/json',
-//       },
-//     });
-
-//     if (!txResponse.ok) {
-//       throw new Error(`API error: ${txResponse.status}`);
-//     }
-
-//     const { success, data } = await txResponse.json();
-//     if (!success) {
-//       throw new Error('Failed to fetch transaction details');
-//     }
-
-//     const credits = data?.filter(t => t.type === 'credit' && t.status === 'success');
-//     const totalCredit = credits?.reduce((sum, t) => sum + parseFloat(t.amount), 0) || 0;
-//     const fees = data?.filter(t => t.type === 'fee').reduce((sum, t) => sum + parseFloat(t.amount), 0) || 0;
-//     return totalCredit - fees; 
-//   } catch (error) {
-//     console.error(`Error fetching balance for account ${accountNumber}:`, error);
-//     return null;
-//   }
-// }
-
-// async function updateWalletBalance(userId, balance, amount, type, reference, narration, timestamp) {
-//   const user = await User.findById(userId);
-//   if (!user) {
-//     console.error(`User not found for ID: ${userId}`);
-//     return;
-//   }
-
-//   user.wallet = user.wallet || { balance: 0, transactions: [] };
-//   user.wallet.balance = balance;
-//   user.wallet.transactions.push({
-//     type,
-//     amount,
-//     provider: 'paylony',
-//     reference,
-//     status: 'success',
-//     details: { narration: narration || 'Inward transfer' },
-//     timestamp: new Date(timestamp),
-//   });
-
-//   await user.save();
-// }
-
-
 
 
 export const createDirectDebitMandate = async (req, res) => {
@@ -451,171 +389,6 @@ export const debitMandate = async (req, res) => {
 };
 
 
-export const fetchAndUpdateWalletBalance = async (req, res) => {
-  // Source provider and reference from alternative locations
-  const provider = 'paylony'; // Hardcode to 'paylony' since the code is Paylony-specific
-  const reference ='sydegllwnq8bqiqk1np1'
-  console.log({ provider, reference }, "Provider and reference used");
-
-  // Validate provider (optional, since we're hardcoding it)
-  if (provider !== 'paylony') {
-    console.log("Provider is not Paylony");
-    return res.status(400).json({ error: 'Unsupported provider' });
-  }
-
-  // Validate environment variables
-  if (!process.env.PAYLONY_API_URL || !process.env.PAYLONY_SECRET_KEY) {
-    return res.status(500).json({ error: 'Missing Paylony API configuration' });
-  }
-
-  const session = await User.startSession();
-  session.startTransaction();
-  try {
-    const user = await User.findOne({ email: req.user?.email }).session(session);
-    if (!user) throw new Error('User not found');
-
-    const balance = await fetchCustomerBalance(user.paylonyVirtualAccountDetails.account_number, reference);
-    if (balance !== null) {
-      user.wallet = user.wallet || { balance: 0, transactions: [] };
-      const previousBalance = user.wallet.balance;
-      const amountChanged = balance - previousBalance;
-      if (amountChanged !== 0 && reference) { // Only log transaction if reference is provided and balance changed
-        await updateWalletBalance(
-          user._id,
-          balance,
-          Math.abs(amountChanged),
-          amountChanged > 0 ? 'credit' : 'debit',
-          reference,
-          'Balance update from Paylony',
-          Date.now()
-        );
-      } else {
-        user.wallet.balance = balance; // Update balance without logging transaction if no reference
-        await user.save({ session });
-      }
-      await session.commitTransaction();
-      console.log(`Wallet balance updated for ${provider} (${reference || 'no reference'}): from ${previousBalance} to ${balance}`);
-      res.json({ balance }); // Match frontend expectation
-    } else {
-      throw new Error('Failed to fetch balance');
-    }
-  } catch (error) {
-    await session.abortTransaction();
-    console.error(`Error fetching ${provider} transaction details (${reference || 'no reference'}):`, error);
-    res.status(500).json({ error: error.message });
-  } finally {
-    session.endSession();
-  }
-};
-
-async function fetchCustomerBalance(accountNumber, reference) {
-  try {
-    if (!process.env.PAYLONY_API_URL || !process.env.PAYLONY_SECRET_KEY) {
-      throw new Error('Missing Paylony API configuration');
-    }
-
-    // Sanitize PAYLONY_API_URL to remove trailing slashes, semicolons, or whitespace
-    const baseUrl = process.env.PAYLONY_API_URL.replace(/[;\s/]+$/, '');
-    console.log(`Sanitized PAYLONY_API_URL: ${baseUrl}`); // Log for debugging
-
-    // Use the correct Paylony API endpoint for balance (adjust based on documentation)
-    const balanceUrl = `${baseUrl}/accounts/${accountNumber}/balance`; // Verify this endpoint
-    console.log(`Attempting to fetch balance from: ${balanceUrl}`);
-
-    try {
-      new URL(balanceUrl); // Validate URL format
-    } catch (urlError) {
-      throw new Error(`Invalid Paylony API URL: ${balanceUrl}`);
-    }
-
-    const response = await fetch(balanceUrl, {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${process.env.PAYLONY_SECRET_KEY}`,
-        'Content-Type': 'application/json',
-      },
-    });
-
-    if (response.ok) {
-      const { success, data } = await response.json();
-      if (success && data && typeof data.balance === 'number') {
-        console.log(`Fetched balance for account ${accountNumber}: ${data.balance}`);
-        return data.balance;
-      }
-      throw new Error('Invalid response format from Paylony balance API');
-    } else if (response.status === 404) {
-      console.error(`Balance API returned 404 for account ${accountNumber}`);
-      // Proceed to transaction details if reference is provided
-    } else {
-      throw new Error(`Balance API error: ${response.status}`);
-    }
-
-    if (!reference) {
-      throw new Error('No reference provided and balance API failed');
-    }
-
-    // Use the correct Paylony API endpoint for transaction details (adjust based on documentation)
-    const txUrl = `${baseUrl}/fetch_transfer_details/${reference}`; // Verify this endpoint
-    console.log(`Attempting to fetch transaction details from: ${txUrl}`);
-
-    try {
-      new URL(txUrl); // Validate URL format
-    } catch (urlError) {
-      throw new Error(`Invalid Paylony transaction URL: ${txUrl}`);
-    }
-
-    const txResponse = await fetch(txUrl, {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${process.env.PAYLONY_SECRET_KEY}`,
-        'Content-Type': 'application/json',
-      },
-    });
-
-    if (!txResponse.ok) {
-      throw new Error(`Transaction API error: ${txResponse.status}`);
-    }
-
-    const { success, data } = await txResponse.json();
-    if (!success || !data) {
-      throw new Error('Failed to fetch transaction details or no data returned');
-    }
-
-    const credits = data?.filter(t => t.type === 'credit' && t.status === 'success');
-    const totalCredit = credits?.reduce((sum, t) => sum + parseFloat(t.amount), 0) || 0;
-    const fees = data?.filter(t => t.type === 'fee').reduce((sum, t) => sum + parseFloat(t.amount), 0) || 0;
-    const calculatedBalance = totalCredit - fees;
-    console.log(`Calculated balance from transactions for ${reference}: ${calculatedBalance}`);
-    return calculatedBalance;
-  } catch (error) {
-    console.error(`Error fetching balance for account ${accountNumber}:`, error);
-    return null;
-  }
-}
-
-async function updateWalletBalance(userId, balance, amount, type, reference, narration, timestamp) {
-  const user = await User.findById(userId);
-  if (!user) {
-    console.error(`User not found for ID: ${userId}`);
-    return;
-  }
-
-  user.wallet = user.wallet || { balance: 0, transactions: [] };
-  user.wallet.balance = balance;
-  user.wallet.transactions.push({
-    type,
-    amount,
-    provider: 'paylony',
-    reference,
-    status: 'success',
-    details: { narration: narration || 'Inward transfer' },
-    timestamp: new Date(timestamp),
-  });
-
-  await user.save();
-}
-
-
 
 export const walletCallback = async (req, res) => {
   try {
@@ -658,81 +431,1113 @@ export const walletCallback = async (req, res) => {
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+// async function fetchCustomerBalance(accountNumber, reference = null) {
+//   try {
+//     if (!process.env.PAYLONY_API_URL || !process.env.PAYLONY_SECRET_KEY) {
+//       throw new Error('Missing Paylony API configuration');
+//     }
+
+//     const baseUrl = process.env.PAYLONY_API_URL.replace(/[;\s/]+$/, '');
+//     console.log(`Sanitized PAYLONY_API_URL: ${baseUrl}`);
+
+//     // Attempt to fetch balance
+//     const balanceUrl = `${baseUrl}/accounts/${accountNumber}/balance`;
+//     console.log(`Attempting to fetch balance from: ${balanceUrl}`);
+
+//     try {
+//       new URL(balanceUrl);
+//     } catch (urlError) {
+//       throw new Error(`Invalid Paylony API URL: ${balanceUrl}`);
+//     }
+
+//     const balanceResponse = await fetch(balanceUrl, {
+//       method: 'GET',
+//       headers: {
+//         'Authorization': `Bearer ${process.env.PAYLONY_SECRET_KEY}`,
+//         'Content-Type': 'application/json',
+//       },
+//       signal: AbortSignal.timeout(5000),
+//     });
+
+//     if (balanceResponse.ok) {
+//       const { success, data } = await balanceResponse.json();
+//       if (success && data && typeof data.balance === 'number') {
+//         console.log(`Fetched balance for account ${accountNumber}: ${data.balance}`);
+//         return data.balance;
+//       }
+//       throw new Error('Invalid response format from Paylony balance API');
+//     } else {
+//       console.error(`Balance API returned ${balanceResponse.status} for account ${accountNumber}`);
+//       const rawResponse = await balanceResponse.text();
+//       console.log(`Raw balance response: ${rawResponse}`);
+//     }
+
+//     // If balance fetch fails and reference is provided, try transaction details
+//     if (reference) {
+//       const txUrl = `${baseUrl}/fetch_transfer_details/${reference}`;
+//       console.log(`Attempting to fetch transaction details from: ${txUrl}`);
+
+//       try {
+//         new URL(txUrl);
+//       } catch (urlError) {
+//         throw new Error(`Invalid Paylony transaction URL: ${txUrl}`);
+//       }
+
+//       const txResponse = await fetch(txUrl, {
+//         method: 'GET',
+//         headers: {
+//           'Authorization': `Bearer ${process.env.PAYLONY_SECRET_KEY}`,
+//           'Content-Type': 'application/json',
+//         },
+//         signal: AbortSignal.timeout(5000),
+//       });
+
+//       if (!txResponse.ok) {
+//         const rawTxResponse = await txResponse.text();
+//         console.error(`Transaction API returned ${txResponse.status}: ${rawTxResponse}`);
+//         throw new Error(`Transaction API error: ${txResponse.status}`);
+//       }
+
+//       const { success, data } = await txResponse.json();
+//       if (!success || !data) {
+//         throw new Error('Failed to fetch transaction details or no data returned');
+//       }
+
+//       const credits = data?.filter((t) => t.type === 'credit' && t.status === 'success');
+//       const totalCredit = credits?.reduce((sum, t) => sum + parseFloat(t.amount), 0) || 0;
+//       const fees = data?.filter((t) => t.type === 'fee').reduce((sum, t) => sum + parseFloat(t.amount), 0) || 0;
+//       const calculatedBalance = totalCredit - fees;
+//       console.log(`Calculated balance from transactions for ${reference}: ${calculatedBalance}`);
+//       return calculatedBalance;
+//     }
+
+//     return null;
+//   } catch (error) {
+//     console.error(`Error fetching balance for account ${accountNumber}:`, error);
+//     return null;
+//   }
+// }
+
+// async function updateWalletBalance(userId, balance, amount, type, reference, narration, timestamp, status = 'success') {
+//   const user = await User.findById(userId);
+//   if (!user) {
+//     console.error(`User not found for ID: ${userId}`);
+//     return;
+//   }
+
+//   user.wallet = user.wallet || { balance: 0, transactions: [] };
+//   user.wallet.balance = balance;
+//   if (reference) {
+//     user.wallet.transactions.push({
+//       type,
+//       amount,
+//       provider: 'paylony',
+//       reference,
+//       status,
+//       details: { narration: narration || 'Balance update from Paylony' },
+//       timestamp: new Date(timestamp),
+//     });
+//   }
+
+//   await user.save();
+// }
+
+// export const fetchAndUpdateWalletBalance = async (req, res) => {
+//   const provider = 'paylony';
+//   let reference = null;
+//   const session = await User.startSession();
+//   session.startTransaction();
+
+//   try {
+//     if (!req.user?.email) {
+//       throw new Error('User email not provided in request');
+//     }
+
+//     const user = await User.findOne({ email: req.user.email }).session(session);
+//     if (!user) {
+//       throw new Error('User not found');
+//     }
+
+//     if (!user.paylonyVirtualAccountDetails?.account_number) {
+//       throw new Error('No Paylony account number found for user');
+//     }
+
+//     const pendingTransaction = user.wallet?.transactions
+//       ?.filter((tx) => tx.provider === 'paylony' && tx.status === 'pending')
+//       ?.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))[0];
+
+//     reference = pendingTransaction?.reference || `paylony_balance_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+//     console.log({ provider, reference }, 'Provider and reference used');
+
+//     const balance = await fetchCustomerBalance(user.paylonyVirtualAccountDetails.account_number, pendingTransaction?.reference || null);
+//     user.wallet = user.wallet || { balance: 0, transactions: [] };
+//     const previousBalance = user.wallet.balance;
+//     const amountChanged = balance - previousBalance;
+
+//     await updateWalletBalance(
+//       user._id,
+//       balance,
+//       amountChanged,
+//       'balance_check',
+//       reference,
+//       'Paylony balance check',
+//       Date.now(),
+//       'success'
+//     );
+
+//     if (pendingTransaction) {
+//       const transaction = user.wallet.transactions.find((tx) => tx.reference === pendingTransaction.reference);
+//       if (transaction && transaction.status === 'pending') {
+//         transaction.status = 'success';
+//         await user.save({ session });
+//       }
+//     }
+
+//     await session.commitTransaction();
+//     console.log(`Wallet balance updated for ${provider} (${reference}): from ${previousBalance} to ${balance}`);
+//     res.json({ balance });
+//   } catch (error) {
+//     await session.abortTransaction();
+//     console.error(`Error fetching ${provider} transaction details (${reference || 'no reference'}):`, error.message);
+//     if (error.message.includes('not found')) {
+//       res.status(404).json({ error: error.message });
+//     } else {
+//       res.status(500).json({ error: 'Failed to fetch balance' });
+//     }
+//   } finally {
+//     session.endSession();
+//   }
+// };
+
+
+
+
+async function fetchCustomerBalance(accountNumber, reference = null) {
+  try {
+    if (!process.env.PAYLONY_API_URL || !process.env.PAYLONY_SECRET_KEY) {
+      throw new Error('Missing Paylony API configuration');
+    }
+
+    const baseUrl = process.env.PAYLONY_API_URL.replace(/[;\s/]+$/, '');
+    console.log(`Sanitized PAYLONY_API_URL: ${baseUrl}`);
+
+    // Attempt to fetch balance
+    const balanceUrl = `${baseUrl}/accounts/${accountNumber}/balance`;
+    console.log(`Attempting to fetch balance from: ${balanceUrl}`);
+
+    try {
+      new URL(balanceUrl);
+    } catch (urlError) {
+      throw new Error(`Invalid Paylony API URL: ${balanceUrl}`);
+    }
+
+    const balanceResponse = await fetch(balanceUrl, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${process.env.PAYLONY_SECRET_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      signal: AbortSignal.timeout(5000),
+    });
+
+    if (balanceResponse.status === 404) {
+      throw new Error(`Account ${accountNumber} not found in Paylony`);
+    }
+
+    if (balanceResponse.ok) {
+      const { success, data } = await balanceResponse.json();
+      if (success && data && typeof data.balance === 'number') {
+        console.log(`Fetched balance for account ${accountNumber}: ${data.balance}`);
+        return data.balance;
+      }
+      throw new Error('Invalid response format from Paylony balance API');
+    } else {
+      const rawResponse = await balanceResponse.text();
+      console.error(`Balance API returned ${balanceResponse.status} for account ${accountNumber}: ${rawResponse}`);
+      throw new Error(`Paylony API error: ${balanceResponse.status}`);
+    }
+
+    // If balance fetch fails and reference is provided, try transaction details (fallback)
+    if (reference) {
+      const txUrl = `${baseUrl}/fetch_transfer_details/${reference}`;
+      console.log(`Attempting to fetch transaction details from: ${txUrl}`);
+
+      try {
+        new URL(txUrl);
+      } catch (urlError) {
+        throw new Error(`Invalid Paylony transaction URL: ${txUrl}`);
+      }
+
+      const txResponse = await fetch(txUrl, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${process.env.PAYLONY_SECRET_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        signal: AbortSignal.timeout(5000),
+      });
+
+      if (!txResponse.ok) {
+        const rawTxResponse = await txResponse.text();
+        console.error(`Transaction API returned ${txResponse.status}: ${rawTxResponse}`);
+        throw new Error(`Transaction API error: ${txResponse.status}`);
+      }
+
+      const { success, data } = await txResponse.json();
+      if (!success || !data) {
+        throw new Error('Failed to fetch transaction details or no data returned');
+      }
+
+      const credits = data?.filter((t) => t.type === 'credit' && t.status === 'success');
+      const totalCredit = credits?.reduce((sum, t) => sum + parseFloat(t.amount), 0) || 0;
+      const fees = data?.filter((t) => t.type === 'fee').reduce((sum, t) => sum + parseFloat(t.amount), 0) || 0;
+      const calculatedBalance = totalCredit - fees;
+      console.log(`Calculated balance from transactions for ${reference}: ${calculatedBalance}`);
+      return calculatedBalance;
+    }
+
+    return null; // Fallback if no reference
+  } catch (error) {
+    console.error(`Error fetching balance for account ${accountNumber}:`, error.message);
+    throw error; // Re-throw for caller to handle
+  }
+}
+
+async function fetchPaystackBalance() {
+  try {
+    if (!process.env.PAYSTACK_SECRET_KEY) {
+      throw new Error('Missing Paystack secret key');
+    }
+
+    const paystackUrl = 'https://api.paystack.co/balance';
+    console.log(`Attempting to fetch Paystack balance from: ${paystackUrl}`);
+
+    const response = await fetch(paystackUrl, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      signal: AbortSignal.timeout(5000),
+    });
+
+    if (response.status === 404) {
+      throw new Error('Paystack balance endpoint not found');
+    }
+
+    if (response.ok) {
+      const { status, data } = await response.json();
+      if (status && data && typeof data.balance === 'number') {
+        console.log(`Fetched Paystack balance: ${data.balance} (available: ${data.available_balance})`);
+        return data.balance; // Returns total balance in kobo; use data.available_balance if needed
+      }
+      throw new Error('Invalid response format from Paystack balance API');
+    } else {
+      const rawResponse = await response.text();
+      console.error(`Paystack API returned ${response.status}: ${rawResponse}`);
+      throw new Error(`Paystack API error: ${response.status}`);
+    }
+  } catch (error) {
+    console.error('Error fetching Paystack balance:', error.message);
+    throw error;
+  }
+}
+
+async function updateWalletBalance(userId, balance, amount, type, reference, narration, timestamp, status = 'success') {
+  const user = await User.findById(userId);
+  if (!user) {
+    console.error(`User not found for ID: ${userId}`);
+    return;
+  }
+
+  user.wallet = user.wallet || { balance: 0, transactions: [] };
+  user.wallet.balance = balance;
+  if (reference) {
+    user.wallet.transactions.push({
+      type,
+      amount,
+      provider: 'paylony', // Update to dynamic provider if needed
+      reference,
+      status,
+      details: { narration: narration || 'Balance update' },
+      timestamp: new Date(timestamp),
+    });
+  }
+
+  await user.save();
+}
+
+export const fetchAndUpdateWalletBalance = async (req, res) => {
+  let reference = null;
+  const session = await User.startSession();
+  session.startTransaction();
+
+  try {
+    if (!req.user?.email) {
+      throw new Error('User email not provided in request');
+    }
+
+    const user = await User.findOne({ email: req.user.email }).session(session);
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    // Determine provider: Prioritize Paylony if details exist, fallback to Paystack
+    // Optionally, accept ?provider=paylony or ?provider=paystack from query params
+    const queryProvider = req.query.provider;
+    let provider = queryProvider || (user.paylonyVirtualAccountDetails?.account_number ? 'paylony' : 'paystack');
+
+    // Validate provider support
+    if (!['paylony', 'paystack'].includes(provider)) {
+      throw new Error('Unsupported provider. Use paylony or paystack.');
+    }
+
+    console.log(`Fetching balance for provider: ${provider}`);
+
+    let balance;
+    if (provider === 'paylony') {
+      if (!user.paylonyVirtualAccountDetails?.account_number) {
+        throw new Error('No Paylony account number found for user');
+      }
+
+      // Find pending transaction for reference
+      const pendingTransaction = user.wallet?.transactions
+        ?.filter((tx) => tx.provider === 'paylony' && tx.status === 'pending')
+        ?.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))[0];
+
+      reference = pendingTransaction?.reference || `paylony_balance_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
+      try {
+        balance = await fetchCustomerBalance(user.paylonyVirtualAccountDetails.account_number, pendingTransaction?.reference || null);
+      } catch (paylonyError) {
+        console.warn(`Paylony API failed: ${paylonyError.message}. Using fallback balance.`);
+        balance = user.wallet.balance || 0; // Fallback to stored balance
+      }
+    } else if (provider === 'paystack') {
+      if (!user.paystackVirtualAccountDetails?.customer_code) { // Assume customer_code field; adjust if different
+        throw new Error('No Paystack customer code found for user');
+      }
+
+      reference = `paystack_balance_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
+      try {
+        balance = await fetchPaystackBalance();
+      } catch (paystackError) {
+        console.warn(`Paystack API failed: ${paystackError.message}. Using fallback balance.`);
+        balance = user.wallet.balance || 0; // Fallback to stored balance
+      }
+    }
+
+    user.wallet = user.wallet || { balance: 0, transactions: [] };
+    const previousBalance = user.wallet.balance;
+    const amountChanged = balance - previousBalance;
+
+    // Log balance check as a transaction
+    await updateWalletBalance(
+      user._id,
+      balance,
+      amountChanged,
+      'balance_check',
+      reference,
+      `${provider.toUpperCase()} balance check`,
+      Date.now(),
+      'success'
+    );
+
+    // Update pending transaction status if applicable
+    if (reference.startsWith('paylony_') || reference.startsWith('paystack_')) {
+      const transaction = user.wallet.transactions.find((tx) => tx.reference === reference && tx.status === 'pending');
+      if (transaction) {
+        transaction.status = 'success';
+        await user.save({ session });
+      }
+    }
+
+    await session.commitTransaction();
+    console.log(`Wallet balance updated for ${provider} (${reference}): from ${previousBalance} to ${balance}`);
+    res.json({ 
+      success: true, 
+      balance, 
+      provider,
+      previousBalance,
+      amountChanged 
+    });
+  } catch (error) {
+    await session.abortTransaction();
+    console.error(`Error fetching ${provider || 'unknown'} balance (${reference || 'no reference'}):`, error.message);
+
+    // Specific status for common errors
+    if (error.message.includes('not found')) {
+      res.status(404).json({ error: error.message });
+    } else if (error.message.includes('Unsupported provider')) {
+      res.status(400).json({ error: error.message });
+    } else {
+      res.status(500).json({ error: 'Failed to fetch balance' });
+    }
+  } finally {
+    session.endSession();
+  }
+};
+
+
+
+export const checkBalancePaystack = async (req, res) => {
+  const provider = 'paystack';
+ console.log({ provider }, 'Provider used');
+
+  if (provider !== 'paystack') {
+   console.log('Provider is not Paystack');
+    return res.status(400).json({ error: 'Unsupported provider' });
+  }
+
+  if (!process.env.PAYSTACK_API_URL || !process.env.PAYSTACK_SECRET_KEY) {
+    return res.status(500).json({ error: 'Missing Paystack API configuration' });
+  }
+
+  const session = await mongoose.startSession();
+  session.startTransaction();
+  let reference = null;
+  try {
+    if (!req.user?.email) {
+      throw new Error('Unauthorized: No user authenticated');
+    }
+    const user = await User.findOne({ email: req.user.email }).session(session);
+    if (!user) throw new Error('User not found');
+    if (!user.virtualAccountDetails?.account_number) {
+      throw new Error('User virtual account details not found');
+    }
+
+    reference = `bal_check_${user._id}_${uuidv4()}`;
+   console.log({ reference }, 'Generated reference for balance check');
+
+    const balance = await fetchCustomerBalancePaystack(user.virtualAccountDetails.account_number, reference, user.paystackCustomerId);
+    if (balance !== null) {
+      user.wallet = user.wallet || { balance: 0, transactions: [] };
+      const previousBalance = user.wallet.balance;
+      const amountChanged = balance - previousBalance;
+      if (amountChanged !== 0) {
+        await updateWalletBalancePaystack(
+          user._id,
+          balance,
+          Math.abs(amountChanged),
+          amountChanged > 0 ? 'credit' : 'debit',
+          reference,
+          'Balance update from Paystack',
+          Date.now()
+        );
+      } else {
+        user.wallet.balance = balance;
+        user.wallet.transactions.push({
+          type: 'balance_check',
+          amount: 0,
+          provider: 'paystack',
+          reference,
+          status: 'success',
+          details: 'Balance check from Paystack',
+          timestamp: new Date(),
+        });
+        await user.save({ session });
+      }
+      await session.commitTransaction();
+    console.log(`Wallet balance updated for ${provider} (${reference}): from ${previousBalance} to ${balance}`);
+      res.json({
+        status: true,
+        message: 'Balance retrieved successfully',
+        data: {
+          user_id: user._id,
+          dva_account_number: user.virtualAccountDetails.account_number,
+          balance: balance / 100, // Convert to NGN
+          transaction_count: user.wallet.transactions.length,
+          last_updated: new Date().toISOString(),
+        },
+      });
+    } else {
+      throw new Error('Failed to fetch balance');
+    }
+  } catch (error) {
+    await session.abortTransaction();
+   console.log(`Error fetching ${provider} transaction details (${reference || 'no reference'}):`, error);
+    res.status(500).json({ error: error.message });
+  } finally {
+    session.endSession();
+  }
+};
+
+
+async function fetchCustomerBalancePaystack(accountNumber, reference, customerId) {
+  try {
+    const paystackUrl = `${process.env.PAYSTACK_API_URL}/transaction`;
+    let totalBalance = 0;
+    let page = 1;
+    let hasMorePages = false;
+
+    do {
+      const response = await axios.get(paystackUrl, {
+        headers: {
+          Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
+          Accept: 'application/json',
+        },
+        params: {
+          status: 'success',
+          channel: 'dedicated_nuban',
+          perPage: 200,
+          page,
+          customer: customerId,
+        },
+      });
+
+      if (response.status !== 200) {
+        console.log('[fetchCustomerBalance] Paystack API call failed', {
+          status: response.status,
+          body: response.data,
+          page,
+        });
+        return null;
+      }
+
+      const transactions = response.data.data || [];
+      hasMorePages = transactions.length === 200;
+
+      for (const transaction of transactions) {
+        const transAccountNumber =
+          transaction.metadata?.receiver_account_number ||
+          transaction.authorization?.account_number ||
+          null;
+
+        if (transAccountNumber === accountNumber) {
+          const amount = transaction.amount || 0;
+          totalBalance += amount;
+        }
+      }
+
+      page++;
+    } while (hasMorePages && page <= 250);
+
+    return totalBalance;
+  } catch (error) {
+   console.log('[fetchCustomerBalance] Error fetching balance', {
+      error: error.message,
+      accountNumber,
+      reference,
+    });
+    return null;
+  }
+}
+
+
+async function updateWalletBalancePaystack(userId, newBalance, amount, type, reference, details, timestamp) {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+  try {
+    const user = await User.findById(userId).session(session);
+    if (!user) throw new Error('User not found');
+
+    user.wallet = user.wallet || { balance: 0, transactions: [] };
+    user.wallet.balance = newBalance;
+    user.wallet.transactions.push({
+      type,
+      amount,
+      provider: 'paystack',
+      reference,
+      status: 'success',
+      details,
+      timestamp: new Date(timestamp),
+    });
+
+    await user.save({ session });
+    await session.commitTransaction();
+  } catch (error) {
+    await session.abortTransaction();
+    throw error;
+  } finally {
+    session.endSession();
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+// // Paylony Functions
+// export const fetchAndUpdateWalletBalance = async (req, res) => {
+//   // Source provider and reference from alternative locations
+//   const provider = 'paylony'; // Hardcode to 'paylony' since the code is Paylony-specific
+//   const reference = `paylony_sync_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`; // Dynamic reference
+//   console.log({ provider, reference }, "Provider and reference used");
+
+//   // Validate provider (optional, since we're hardcoded it)
+//   if (provider !== 'paylony') {
+//     console.log("Provider is not Paylony");
+//     return res.status(400).json({ error: 'Unsupported provider' });
+//   }
+
+//   // Validate environment variables
+//   if (!process.env.PAYLONY_API_URL || !process.env.PAYLONY_SECRET_KEY) {
+//     return res.status(500).json({ error: 'Missing Paylony API configuration' });
+//   }
+
+//   const session = await User.startSession();
+//   session.startTransaction();
+//   try {
+//     const user = await User.findOne({ email: req.user?.email }).session(session);
+//     if (!user) throw new Error('User not found');
+
+//     if (!user.paylonyVirtualAccountDetails?.account_number) {
+//       throw new Error('Paylony virtual account details not found');
+//     }
+
+//     const balance = await fetchCustomerBalance(user.paylonyVirtualAccountDetails.account_number, reference);
+//     if (balance !== null) {
+//       user.wallet = user.wallet || { balance: 0, transactions: [] };
+//       const previousBalance = user.wallet.balance || 0;
+//       const amountChanged = balance - previousBalance;
+//       if (amountChanged !== 0 && reference) { // Only log transaction if reference is provided and balance changed
+//         await updateWalletBalance(
+//           user._id,
+//           balance,
+//           Math.abs(amountChanged),
+//           amountChanged > 0 ? 'credit' : 'debit',
+//           reference,
+//           'Balance update from Paylony',
+//           Date.now()
+//         );
+//       } else {
+//         user.wallet.balance = balance; // Update balance without logging transaction if no reference
+//         await user.save({ session });
+//       }
+//       await session.commitTransaction();
+//       console.log(`Wallet balance updated for ${provider} (${reference || 'no reference'}): from ${previousBalance} to ${balance}`);
+//       res.json({ balance: balance / 100 }); // Convert to NGN and match frontend expectation
+//     } else {
+//       // Fallback to current wallet balance if API fails
+//       res.json({ balance: (user.wallet?.balance || 0) / 100 });
+//     }
+//   } catch (error) {
+//     await session.abortTransaction();
+//     console.error(`Error fetching ${provider} transaction details (${reference || 'no reference'}):`, error);
+//     res.status(500).json({ error: error.message });
+//   } finally {
+//     session.endSession();
+//   }
+// };
+
+// async function fetchCustomerBalance(accountNumber, reference) {
+//   try {
+//     if (!process.env.PAYLONY_API_URL || !process.env.PAYLONY_SECRET_KEY) {
+//       throw new Error('Missing Paylony API configuration');
+//     }
+
+//     // Sanitize PAYLONY_API_URL to remove trailing slashes, semicolons, or whitespace
+//     const baseUrl = process.env.PAYLONY_API_URL.replace(/[;\s/]+$/, '');
+//     console.log(`Sanitized PAYLONY_API_URL: ${baseUrl}`);
+
+//     // First, fetch all accounts to get the account ID for the given account_number
+//     const accountsUrl = `${baseUrl}/fetch_all_accounts`;
+//     console.log(`Fetching accounts from: ${accountsUrl}`);
+
+//     const accountsResponse = await fetch(accountsUrl, {
+//       method: 'GET',
+//       headers: {
+//         'Authorization': `Bearer ${process.env.PAYLONY_SECRET_KEY}`,
+//         'Content-Type': 'application/json',
+//       },
+//     });
+
+//     if (!accountsResponse.ok) {
+//       console.error(`Accounts API error: ${accountsResponse.status} - ${accountsResponse.statusText}`);
+//       throw new Error(`Failed to fetch accounts: ${accountsResponse.status}`);
+//     }
+
+//     const accountsData = await accountsResponse.json();
+//     console.log('Paylony Accounts Response:', JSON.stringify(accountsData, null, 2));
+
+//     const { success, data } = accountsData;
+//     if (!success || !data || !data.data) {
+//       throw new Error('Failed to fetch accounts or no data returned');
+//     }
+
+//     // Find the account by account_number
+//     const account = data.data.find(acc => acc.account_number === accountNumber);
+//     if (!account) {
+//       throw new Error(`Account ${accountNumber} not found`);
+//     }
+
+//     const accountId = account.id;
+//     const accountReference = account.reference; // Use the actual account reference if needed
+//     console.log(`Found account ID: ${accountId} for account_number: ${accountNumber}, reference: ${accountReference}`);
+
+//     // Try balance endpoint with account ID
+//     const balanceUrl = `${baseUrl}/api/v1/accounts/${accountId}/balance`;
+//     console.log(`Attempting to fetch balance from: ${balanceUrl}`);
+
+//     const response = await fetch(balanceUrl, {
+//       method: 'GET',
+//       headers: {
+//         'Authorization': `Bearer ${process.env.PAYLONY_SECRET_KEY}`,
+//         'Content-Type': 'application/json',
+//       },
+//     });
+
+//     if (response.ok) {
+//       const responseData = await response.json();
+//       console.log('Paylony Balance Response:', JSON.stringify(responseData, null, 2));
+      
+//       const { success: balSuccess, data: balData } = responseData;
+//       if (balSuccess && balData && (balData.balance !== undefined || balData.available_balance !== undefined)) {
+//         const balance = balData.balance || balData.available_balance;
+//         console.log(`Fetched balance for account ${accountNumber}: ${balance}`);
+//         return balance;
+//       }
+//       throw new Error('Invalid response format from Paylony balance API');
+//     } else if (response.status === 404) {
+//       console.error(`Balance API returned 404 for account ID ${accountId}`);
+//       // Try alternative balance endpoint with params
+//       const altBalanceUrl = `${baseUrl}/api/v1/accounts/balance?account_id=${accountId}`;
+//       console.log(`Trying alternative balance URL: ${altBalanceUrl}`);
+//       const altBalanceResponse = await fetch(altBalanceUrl, {
+//         method: 'GET',
+//         headers: {
+//           'Authorization': `Bearer ${process.env.PAYLONY_SECRET_KEY}`,
+//           'Content-Type': 'application/json',
+//         },
+//       });
+//       if (altBalanceResponse.ok) {
+//         const altBalanceData = await altBalanceResponse.json();
+//         console.log('Alternative Balance Response:', JSON.stringify(altBalanceData, null, 2));
+//         // Parse balance from alternative response
+//         const { success: altSuccess, data: altData } = altBalanceData;
+//         if (altSuccess && altData && (altData.balance !== undefined || altData.available_balance !== undefined)) {
+//           const balance = altData.balance || altData.available_balance;
+//           console.log(`Fetched balance from alternative endpoint for account ${accountNumber}: ${balance}`);
+//           return balance;
+//         }
+//       }
+//     } else {
+//       console.error(`Balance API error: ${response.status} - ${response.statusText}`);
+//       throw new Error(`Balance API error: ${response.status}`);
+//     }
+
+//     // Fallback: Fetch all transactions and filter by account_number
+//     const txUrl = `${baseUrl}/api/v1/fetch_all_transactions`; // Assumed endpoint for all transactions
+//     console.log(`Attempting to fetch all transactions from: ${txUrl}`);
+
+//     const txResponse = await fetch(txUrl, {
+//       method: 'GET',
+//       headers: {
+//         'Authorization': `Bearer ${process.env.PAYLONY_SECRET_KEY}`,
+//         'Content-Type': 'application/json',
+//       },
+//       // Add params if supported
+//       // params: { account_id: accountId, account_number: accountNumber }
+//     });
+
+//     if (!txResponse.ok) {
+//       // Try with params
+//       const params = new URLSearchParams({
+//         account_id: accountId,
+//         account_number: accountNumber
+//       });
+//       const paramsTxUrl = `${txUrl}?${params}`;
+//       console.log(`Trying transactions with params: ${paramsTxUrl}`);
+//       const paramsTxResponse = await fetch(paramsTxUrl, {
+//         method: 'GET',
+//         headers: {
+//           'Authorization': `Bearer ${process.env.PAYLONY_SECRET_KEY}`,
+//           'Content-Type': 'application/json',
+//         },
+//       });
+//       if (!paramsTxResponse.ok) {
+//         console.error(`Transactions API error: ${paramsTxResponse.status} - ${paramsTxResponse.statusText}`);
+//         throw new Error(`Transactions API error: ${paramsTxResponse.status}`);
+//       }
+//       txResponse = paramsTxResponse;
+//     }
+
+//     const txData = await txResponse.json();
+//     console.log('Paylony Transactions Response:', JSON.stringify(txData, null, 2));
+    
+//     const { success: txSuccess, data: txDataArray } = txData;
+//     if (!txSuccess || !txDataArray) {
+//       throw new Error('Failed to fetch transaction details or no data returned');
+//     }
+
+//     // Ensure data is an array before filtering
+//     const transactions = Array.isArray(txDataArray) ? txDataArray : [];
+//     const relevantTransactions = transactions.filter(t => t.account_number === accountNumber || t.account_id === accountId);
+//     const credits = relevantTransactions.filter(t => (t.type === 'credit' || t.credit) && t.status === 'success');
+//     const totalCredit = credits.reduce((sum, t) => sum + parseFloat(t.amount || t.credit_amount || 0), 0);
+//     const debits = relevantTransactions.filter(t => (t.type === 'debit' || t.debit) && t.status === 'success');
+//     const totalDebit = debits.reduce((sum, t) => sum + parseFloat(t.amount || t.debit_amount || 0), 0);
+//     const fees = relevantTransactions.filter(t => t.type === 'fee' || t.fee).reduce((sum, t) => sum + parseFloat(t.amount || t.fee_amount || 0), 0);
+//     const calculatedBalance = totalCredit - totalDebit - fees;
+//     console.log(`Calculated balance from transactions for account ${accountNumber}: ${calculatedBalance}`);
+//     return calculatedBalance;
+//   } catch (error) {
+//     console.log(error)
+//     console.error(`Error fetching balance for account ${accountNumber}:`, {
+//       message: error.message,
+//       stack: error.stack
+//     });
+//     return null;
+//   }
+// }
+
+// async function updateWalletBalance(userId, balance, amount, type, reference, narration, timestamp) {
+//   const session = await mongoose.startSession();
+//   session.startTransaction();
+//   try {
+//     const user = await User.findById(userId).session(session);
+//     if (!user) {
+//       console.error(`User not found for ID: ${userId}`);
+//       throw new Error('User not found');
+//     }
+
+//     user.wallet = user.wallet || { balance: 0, transactions: [] };
+//     user.wallet.balance = balance;
+//     user.wallet.transactions.push({
+//       type,
+//       amount,
+//       provider: 'paylony',
+//       reference,
+//       status: 'success',
+//       details: { narration: narration || 'Inward transfer' },
+//       timestamp: new Date(timestamp),
+//     });
+
+//     await user.save({ session });
+//     await session.commitTransaction();
+//   } catch (error) {
+//     await session.abortTransaction();
+//     console.error(`Error updating wallet balance for user ${userId}:`, error);
+//     throw error;
+//   } finally {
+//     session.endSession();
+//   }
+// }
+
+
+// // Paystack Functions
+// export const checkBalancePaystack = async (req, res) => {
+//   const provider = 'paystack';
+//   console.log({ provider }, 'Provider used');
+
+//   if (provider !== 'paystack') {
+//     console.log('Provider is not Paystack');
+//     return res.status(400).json({ error: 'Unsupported provider' });
+//   }
+
+//   if (!process.env.PAYSTACK_API_URL || !process.env.PAYSTACK_SECRET_KEY) {
+//     return res.status(500).json({ error: 'Missing Paystack API configuration' });
+//   }
+
+//   const session = await mongoose.startSession();
+//   session.startTransaction();
+//   let reference = null;
+//   try {
+//     if (!req.user?.email) {
+//       throw new Error('Unauthorized: No user authenticated');
+//     }
+//     const user = await User.findOne({ email: req.user.email }).session(session);
+//     if (!user) throw new Error('User not found');
+//     if (!user.virtualAccountDetails?.account_number) {
+//       throw new Error('User virtual account details not found');
+//     }
+//     if (!user.paystackCustomerId) {
+//       throw new Error('Paystack customer ID not found');
+//     }
+
+//     reference = `bal_check_${user._id}_${uuidv4()}`;
+//     console.log({ reference }, 'Generated reference for balance check');
+
+//     const balance = await fetchCustomerBalancePaystack(
+//       user.virtualAccountDetails.account_number, 
+//       reference, 
+//       user.paystackCustomerId
+//     );
+    
+//     if (balance !== null) {
+//       user.wallet = user.wallet || { balance: 0, transactions: [] };
+//       const previousBalance = user.wallet.balance || 0;
+//       const amountChanged = balance - previousBalance;
+//       if (amountChanged !== 0) {
+//         await updateWalletBalancePaystack(
+//           user._id,
+//           balance,
+//           Math.abs(amountChanged),
+//           amountChanged > 0 ? 'credit' : 'debit',
+//           reference,
+//           'Balance update from Paystack',
+//           Date.now()
+//         );
+//       } else {
+//         user.wallet.balance = balance;
+//         user.wallet.transactions.push({
+//           type: 'balance_check',
+//           amount: 0,
+//           provider: 'paystack',
+//           reference,
+//           status: 'success',
+//           details: 'Balance check from Paystack',
+//           timestamp: new Date(),
+//         });
+//         await user.save({ session });
+//       }
+//       await session.commitTransaction();
+//       console.log(`Wallet balance updated for ${provider} (${reference}): from ${previousBalance} to ${balance}`);
+//       res.json({
+//         status: true,
+//         message: 'Balance retrieved successfully',
+//         data: {
+//           user_id: user._id,
+//           dva_account_number: user.virtualAccountDetails.account_number,
+//           balance: balance / 100, // Convert to NGN
+//           transaction_count: user.wallet.transactions.length,
+//           last_updated: new Date().toISOString(),
+//         },
+//       });
+//     } else {
+//       throw new Error('Failed to fetch balance from Paystack');
+//     }
+//   } catch (error) {
+//     await session.abortTransaction();
+//     console.log(`Error fetching ${provider} transaction details (${reference || 'no reference'}):`, {
+//       error: error.message,
+//       stack: error.stack
+//     });
+//     res.status(500).json({ error: error.message });
+//   } finally {
+//     session.endSession();
+//   }
+// };
+
+// async function fetchCustomerBalancePaystack(accountNumber, reference, customerId) {
+//   try {
+//     const paystackUrl = `${process.env.PAYSTACK_API_URL}/transaction`;
+//     let totalBalance = 0;
+//     let page = 1;
+//     let hasMorePages = false;
+//     let processedTransactions = 0;
+
+//     do {
+//       const response = await axios.get(paystackUrl, {
+//         headers: {
+//           Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
+//           Accept: 'application/json',
+//         },
+//         params: {
+//           status: 'success',
+//           channel: 'dedicated_nuban',
+//           perPage: 200,
+//           page,
+//           customer: customerId,
+//         },
+//       });
+
+//       console.log(`Paystack API Response for page ${page}:`, {
+//         status: response.status,
+//         hasData: !!response.data?.data,
+//         dataType: typeof response.data?.data,
+//         dataLength: Array.isArray(response.data?.data) ? response.data.data.length : 'N/A'
+//       });
+
+//       if (response.status !== 200 || !response.data?.status) {
+//         console.log('[fetchCustomerBalancePaystack] Paystack API call failed', {
+//           status: response.status,
+//           body: response.data,
+//           page,
+//           customerId,
+//         });
+//         return null;
+//       }
+
+//       // Ensure transactions is always an array
+//       const transactions = Array.isArray(response.data.data) ? response.data.data : [];
+//       hasMorePages = transactions.length === 200;
+//       processedTransactions += transactions.length;
+
+//       console.log(`[fetchCustomerBalancePaystack] Processing page ${page}`, {
+//         transactionCount: transactions.length,
+//         totalProcessed: processedTransactions,
+//         accountNumber,
+//         customerId,
+//       });
+
+//       for (const transaction of transactions) {
+//         if (!transaction || typeof transaction !== 'object') {
+//           console.log('Skipping invalid transaction:', transaction);
+//           continue;
+//         }
+        
+//         const transAccountNumber =
+//           transaction.metadata?.receiver_account_number ||
+//           transaction.authorization?.account_number ||
+//           null;
+
+//         if (transAccountNumber === accountNumber) {
+//           const amount = transaction.amount || 0;
+//           totalBalance += amount;
+//           console.log('[fetchCustomerBalancePaystack] Transaction matched', {
+//             reference: transaction.reference || 'N/A',
+//             amount_kobo: amount,
+//             amount_ngn: amount / 100,
+//             running_total_kobo: totalBalance,
+//           });
+//         }
+//       }
+
+//       page++;
+//     } while (hasMorePages && page <= 250);
+
+//     console.log(`[fetchCustomerBalancePaystack] Completed - Total balance: ${totalBalance} kobo`);
+//     return totalBalance;
+//   } catch (error) {
+//     console.log('[fetchCustomerBalancePaystack] Error fetching balance', {
+//       error: error.message,
+//       stack: error.stack,
+//       accountNumber,
+//       reference,
+//       customerId,
+//     });
+//     return null;
+//   }
+// }
+
+// async function updateWalletBalancePaystack(userId, newBalance, amount, type, reference, details, timestamp) {
+//   const session = await mongoose.startSession();
+//   session.startTransaction();
+//   try {
+//     const user = await User.findById(userId).session(session);
+//     if (!user) throw new Error('User not found');
+
+//     user.wallet = user.wallet || { balance: 0, transactions: [] };
+//     user.wallet.balance = newBalance;
+//     user.wallet.transactions.push({
+//       type,
+//       amount,
+//       provider: 'paystack',
+//       reference,
+//       status: 'success',
+//       details,
+//       timestamp: new Date(timestamp),
+//     });
+
+//     await user.save({ session });
+//     await session.commitTransaction();
+//   } catch (error) {
+//     await session.abortTransaction();
+//     console.error(`Error in updateWalletBalancePaystack:`, error);
+//     throw error;
+//   } finally {
+//     session.endSession();
+//   }
+// }
 
 
 

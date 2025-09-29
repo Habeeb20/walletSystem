@@ -1,12 +1,46 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 import User from '../models/user/userModel.js';
+import Airtime from '../models/others/airtimeModel.js';
 import axios from 'axios';
-import crypto from "crypto"
-import dotenv from "dotenv"
+import dotenv from 'dotenv';
 
-dotenv.config()
+dotenv.config();
 
-const PAYLONY_SECRET = process.env.PAYLONY_SECRET_KEY;
-const PAYLONY_API_URL = 'https://api.paylony.com/api/v1';
 const MCD_API_URL = 'https://resellertest.mcd.5starcompany.com.ng/api/v1';
 const MCD_API_TOKEN = process.env.MCD_API_TOKEN;
 
@@ -18,76 +52,119 @@ export const fetchWalletBalance = async (req, res) => {
     }
     res.json({ balance: user.wallet.balance });
   } catch (error) {
+    console.error('Fetch wallet balance error:', error);
     res.status(500).json({ error: 'Failed to fetch wallet balance' });
   }
 };
 
-
-
 export const buyAirtime = async (req, res) => {
   try {
-    const { name, coded, amount, number, country, promo = '0' } = req.body;
+    const { provider, amount, number, country, promo = '0' } = req.body;
     const user = await User.findOne({ email: req.user.email });
     if (!user) return res.status(404).json({ error: 'User not found' });
 
     // Validate input
-    if (!name || !coded || !amount || !number || !country) {
+    if (!provider || !amount || !number || !country) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
-    if (isNaN(amount) || parseFloat(amount) <= 0) {
+    const parsedAmount = parseFloat(amount);
+    if (isNaN(parsedAmount) || parsedAmount <= 0) {
       return res.status(400).json({ error: 'Invalid amount' });
     }
-    if (user.wallet.balance < parseFloat(amount)) {
+    if (user.wallet.balance < parsedAmount) {
       return res.status(400).json({ error: 'Insufficient wallet balance' });
     }
 
-    // Check for duplicate transaction
+    // Generate unique reference
     const reference = `mcd_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    const existingTxn = await User.findOne({
-      'wallet.transactions.reference': reference,
-    });
-    if (existingTxn) {
+    const existingAirtime = await Airtime.findOne({ ref: reference });
+    if (existingAirtime) {
       return res.status(400).json({ error: 'Duplicate transaction reference' });
     }
 
-    // Deduct amount from wallet
-    user.wallet.balance -= parseFloat(amount);
-    await user.save();
-
-    // Call MCD Reseller API
-    const response = await fetch(`${MCD_API_URL}/data`, {
+    // Validate phone number/service (using /validate endpoint)
+    const validateResponse = await fetch(`${MCD_API_URL}/validate`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${MCD_API_TOKEN}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        name,
-        coded,
-        amount: parseFloat(amount).toString(),
+        service: 'airtime',
+        provider,
         number,
+      }),
+    });
+
+    if (!validateResponse.ok) {
+      throw new Error(`Validation failed: ${validateResponse.status}`);
+    }
+
+    const validateResult = await validateResponse.json();
+    if (!validateResult.success) {
+      return res.status(400).json({ error: validateResult.message || 'Invalid phone number or provider' });
+    }
+
+    // Create airtime transaction record (pending)
+    const airtime = new Airtime({
+      userId: user._id,
+      provider,
+      amount: parsedAmount,
+      number,
+      country,
+      payment: 'wallet',
+      promo,
+      ref: reference,
+      operatorID: 0,
+      type: 'airtime',
+      status: 'pending',
+    });
+    await airtime.save();
+
+    // Deduct amount from wallet
+    user.wallet.balance -= parsedAmount;
+    await user.save();
+
+    // Call MCD Reseller API for airtime
+    const response = await fetch(`${MCD_API_URL}/airtime`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${MCD_API_TOKEN}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        provider,
+        amount: parsedAmount.toString(),
+        number,
+        country,
         payment: 'wallet',
         promo,
         ref: reference,
-        country,
+        operatorID: 0,
       }),
     });
 
     if (!response.ok) {
-      // Roll back wallet balance on failure
-      user.wallet.balance += parseFloat(amount);
-      await user.save();
+      // Roll back wallet balance and update transaction status
+      user.wallet.balance += parsedAmount;
+      airtime.status = 'failed';
+      await Promise.all([user.save(), airtime.save()]);
       throw new Error(`MCD API error: ${response.status}`);
     }
 
-    // Log transaction
+    const result = await response.json();
+
+    // Update transaction status and log to user wallet
+    airtime.status = 'success';
+    await airtime.save();
+
     user.wallet.transactions.push({
       type: 'debit',
-      amount: parseFloat(amount),
+      amount: parsedAmount,
       provider: 'mcd',
       reference,
       status: 'success',
-      details: { name, number, country },
+      details: { provider, number, country, type: 'airtime' },
       timestamp: new Date(),
     });
     await user.save();
@@ -95,74 +172,118 @@ export const buyAirtime = async (req, res) => {
     res.json({ success: true, message: 'Airtime purchase successful', reference });
   } catch (error) {
     console.error('Airtime purchase error:', error);
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: error.message || 'Failed to purchase airtime' });
   }
 };
 
 export const buyDataPin = async (req, res) => {
   try {
-    const { name, coded, amount, number, country, promo = '0' } = req.body;
+    const { provider, amount, number, country, promo = '0' } = req.body;
     const user = await User.findOne({ email: req.user.email });
     if (!user) return res.status(404).json({ error: 'User not found' });
 
     // Validate input
-    if (!name || !coded || !amount || !number || !country) {
+    if (!provider || !amount || !number || !country) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
-    if (isNaN(amount) || parseFloat(amount) <= 0) {
+    const parsedAmount = parseFloat(amount);
+    if (isNaN(parsedAmount) || parsedAmount <= 0) {
       return res.status(400).json({ error: 'Invalid amount' });
     }
-    if (user.wallet.balance < parseFloat(amount)) {
+    if (user.wallet.balance < parsedAmount) {
       return res.status(400).json({ error: 'Insufficient wallet balance' });
     }
 
-    // Check for duplicate transaction
+    // Generate unique reference
     const reference = `mcd_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    const existingTxn = await User.findOne({
-      'wallet.transactions.reference': reference,
-    });
-    if (existingTxn) {
+    const existingAirtime = await Airtime.findOne({ ref: reference });
+    if (existingAirtime) {
       return res.status(400).json({ error: 'Duplicate transaction reference' });
     }
 
-    // Deduct amount from wallet
-    user.wallet.balance -= parseFloat(amount);
-    await user.save();
-
-    // Call MCD Reseller API for data pin
-    const response = await fetch(`${MCD_API_URL}/datapin`, {
+    // Validate phone number/service (using /validate endpoint)
+    const validateResponse = await fetch(`${MCD_API_URL}/validate`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${MCD_API_TOKEN}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        name,
-        coded,
-        amount: parseFloat(amount).toString(),
+        service: 'data',
+        provider,
         number,
+      }),
+    });
+
+    if (!validateResponse.ok) {
+      throw new Error(`Validation failed: ${validateResponse.status}`);
+    }
+
+    const validateResult = await validateResponse.json();
+    if (!validateResult.success) {
+      return res.status(400).json({ error: validateResult.message || 'Invalid phone number or provider' });
+    }
+
+    // Create airtime transaction record (pending)
+    const airtime = new Airtime({
+      userId: user._id,
+      provider,
+      amount: parsedAmount,
+      number,
+      country,
+      payment: 'wallet',
+      promo,
+      ref: reference,
+      operatorID: 0,
+      type: 'data_pin',
+      status: 'pending',
+    });
+    await airtime.save();
+
+    // Deduct amount from wallet
+    user.wallet.balance -= parsedAmount;
+    await user.save();
+
+    // Call MCD Reseller API for data (assuming /data endpoint)
+    const response = await fetch(`${MCD_API_URL}/data`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${MCD_API_TOKEN}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        provider,
+        amount: parsedAmount.toString(),
+        number,
+        country,
         payment: 'wallet',
         promo,
         ref: reference,
-        country,
+        operatorID: 0,
       }),
     });
 
     if (!response.ok) {
-      // Roll back wallet balance on failure
-      user.wallet.balance += parseFloat(amount);
-      await user.save();
+      // Roll back wallet balance and update transaction status
+      user.wallet.balance += parsedAmount;
+      airtime.status = 'failed';
+      await Promise.all([user.save(), airtime.save()]);
       throw new Error(`MCD API error: ${response.status}`);
     }
 
-    // Log transaction
+    const result = await response.json();
+
+    // Update transaction status and log to user wallet
+    airtime.status = 'success';
+    await airtime.save();
+
     user.wallet.transactions.push({
       type: 'debit',
-      amount: parseFloat(amount),
+      amount: parsedAmount,
       provider: 'mcd',
       reference,
       status: 'success',
-      details: { name, number, country, type: 'data_pin' },
+      details: { provider, number, country, type: 'data_pin' },
       timestamp: new Date(),
     });
     await user.save();
@@ -170,6 +291,6 @@ export const buyDataPin = async (req, res) => {
     res.json({ success: true, message: 'Data pin purchase successful', reference });
   } catch (error) {
     console.error('Data pin purchase error:', error);
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: error.message || 'Failed to purchase data pin' });
   }
 };
