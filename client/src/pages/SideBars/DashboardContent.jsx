@@ -106,7 +106,7 @@ function DashboardContent() {
     .reduce((sum, t) => sum + t.amount, 0) || 0;
   const recentTransactions = allTransactions
     .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
-    .slice(0, 4) || [];
+    .slice(0, 10) || [];
 
   const handleLogout = () => {
     dispatch(logout());

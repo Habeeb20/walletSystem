@@ -20,7 +20,7 @@ export const rechargeAirtime = createAsyncThunk(
   async ({ network, amount, phone, token }, { rejectWithValue }) => {
     try {
       const response = await axios.post(
-        `${import.meta.env.VITE_BACKEND_URL}/wallet/buy-airtime`,
+        `${import.meta.env.VITE_BACKEND_URL}/airtime/buy-airtime`,
         { network, amount, phone },
         { headers: { Authorization: `Bearer ${token}` } }
       );

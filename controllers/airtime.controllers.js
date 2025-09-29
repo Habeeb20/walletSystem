@@ -59,12 +59,17 @@ export const fetchWalletBalance = async (req, res) => {
 
 export const buyAirtime = async (req, res) => {
   try {
-    const { provider, amount, number, country, promo = '0' } = req.body;
+    const { network, amount, phone, country, promo = '0' } = req.body;
+    const provider = network
+    const number = phone
+    console.log(req.body)
+    console.log(provider, "your provider")
     const user = await User.findOne({ email: req.user.email });
     if (!user) return res.status(404).json({ error: 'User not found' });
 
     // Validate input
-    if (!provider || !amount || !number || !country) {
+    if (!provider || !amount || !number ) {
+      console.log("missing fields here")
       return res.status(400).json({ error: 'Missing required fields' });
     }
     const parsedAmount = parseFloat(amount);
@@ -111,7 +116,7 @@ export const buyAirtime = async (req, res) => {
       provider,
       amount: parsedAmount,
       number,
-      country,
+      country: 'NGN',
       payment: 'wallet',
       promo,
       ref: reference,
