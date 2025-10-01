@@ -41,9 +41,9 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-const MCD_API_URL = 'https://resellertest.mcd.5starcompany.com.ng/api/v1';
+const MCD_API_URL = 'https://reseller.mcd.5starcompany.com.ng/api/v1';
 const MCD_API_TOKEN = process.env.MCD_API_TOKEN;
-
+const MCD_TOKEN = process.env.MCD_TOKEN
 export const fetchWalletBalance = async (req, res) => {
   try {
     const user = await User.findOne({ email: req.user.email });
@@ -87,11 +87,13 @@ export const buyAirtime = async (req, res) => {
       return res.status(400).json({ error: 'Duplicate transaction reference' });
     }
 
+    console.log(MCD_TOKEN, "your token")
+
     // Validate phone number/service (using /validate endpoint)
     const validateResponse = await fetch(`${MCD_API_URL}/validate`, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${MCD_API_TOKEN}`,
+        'Authorization': `Bearer ${MCD_TOKEN}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
@@ -102,13 +104,15 @@ export const buyAirtime = async (req, res) => {
     });
 
     if (!validateResponse.ok) {
+      console.log(validateResponse)
       throw new Error(`Validation failed: ${validateResponse.status}`);
     }
 
-    const validateResult = await validateResponse.json();
-    if (!validateResult.success) {
-      return res.status(400).json({ error: validateResult.message || 'Invalid phone number or provider' });
-    }
+    // const validateResult = await validateResponse.json();
+    // if (!validateResult.success) {
+    //   console.log(validateResult)
+    //   return res.status(400).json({ error: validateResult.message  });
+    // }
 
     // Create airtime transaction record (pending)
     const airtime = new Airtime({
@@ -134,7 +138,7 @@ export const buyAirtime = async (req, res) => {
     const response = await fetch(`${MCD_API_URL}/airtime`, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${MCD_API_TOKEN}`,
+        'Authorization': `Bearer ${MCD_TOKEN}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
@@ -299,3 +303,38 @@ export const buyDataPin = async (req, res) => {
     res.status(500).json({ error: error.message || 'Failed to purchase data pin' });
   }
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
