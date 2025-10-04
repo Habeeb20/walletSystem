@@ -61,21 +61,23 @@ export const buyDataPin = createAsyncThunk(
 
 export const buyData = createAsyncThunk(
   'wallet/buyData',
-  async ({ coded, phone, amount, token }, { rejectWithValue }) => {
+  async ({ coded, number, price, token }, { rejectWithValue }) => {
     try {
       const response = await axios.post(
-        `${import.meta.env.VITE_BACKEND_URL}/wallet/buy-data`,
+        `${import.meta.env.VITE_BACKEND_URL}/airtime/buy-data`,
         {
           coded,
-          number: phone,
+          number,
+
           country: 'NG',
           promo: '0',
-          reseller_price: amount.toString(),
+          reseller_price: price.toString(),
         },
         { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } }
       );
       return response.data;
     } catch (error) {
+      console.log(error)
       return rejectWithValue(error.response?.data?.error || 'Failed to purchase data');
     }
   }
@@ -173,3 +175,41 @@ const walletSlice = createSlice({
 
 export const { clearError } = walletSlice.actions;
 export default walletSlice.reducer;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

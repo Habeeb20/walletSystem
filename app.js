@@ -10,6 +10,7 @@ import { configureHelmet } from "./utils/security.js";
 import router from "./routes/user.route.js";
 import airtimerouter from "./routes/airtime.route.js";
 import walletrouter from "./routes/wallet.route.js";
+import electricityRouter from "./routes/electricty.route.js";
 
 
 connectDB()
@@ -61,6 +62,7 @@ app.get("/", (req, res) => {
 app.use("/api/auth", router)
 app.use("/api/wallet", walletrouter)
 app.use("/api/airtime", airtimerouter)
+app.use("/api/electricty", electricityRouter)
 // Error handling
 app.use((err, req, res, next) => {
   console.error("Error:", err.stack);

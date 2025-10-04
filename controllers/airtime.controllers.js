@@ -145,7 +145,7 @@ export const buyAirtime = async (req, res) => {
         provider,
         amount: parsedAmount.toString(),
         number,
-        country,
+        country:'NG',
         payment: 'wallet',
         promo,
         ref: reference,
@@ -161,8 +161,9 @@ export const buyAirtime = async (req, res) => {
       throw new Error(`MCD API error: ${response.status}`);
     }
 
+  
     const result = await response.json();
-
+console.log(result)
     // Update transaction status and log to user wallet
     airtime.status = 'success';
     await airtime.save();
@@ -303,17 +304,6 @@ export const buyDataPin = async (req, res) => {
     res.status(500).json({ error: error.message || 'Failed to purchase data pin' });
   }
 };
-
-
-
-
-
-
-
-
-
-
-
 
 
 

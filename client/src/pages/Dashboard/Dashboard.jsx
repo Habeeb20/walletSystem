@@ -15,12 +15,13 @@ import DataPage from '../SideBars/DataPage';
 
 
 import im from "../../assets/wallet2.png"
+import ElectricityPage from '../SideBars/ElectricityPage';
 
 const Transfer = () => <div>Transfer Component</div>;
 const Data = () => <div>Data Component</div>;
 const Airtime = () => <div> <AirtimePage /> </div>;
 const CableTV = () => <div>Cable TV Component</div>;
-const Electricity = () => <div>Electricity Component</div>;
+const Electricity = () => <div><ElectricityPage /></div>;
 const Profile = () => <div> <ProfilePage /> </div>;
 const Settings = () => <div>Settings Component</div>;
 const Security = () => <div>Security Component</div>;

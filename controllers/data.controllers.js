@@ -7,17 +7,18 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-const MCD_API_URL = 'https://resellertest.mcd.5starcompany.com.ng/api/v1';
+const MCD_API_URL =  'https://reseller.mcd.5starcompany.com.ng/api/v1';
 const MCD_API_TOKEN = process.env.MCD_API_TOKEN;
-
+const MCD_TOKEN = process.env.MCD_TOKEN
 export const buyData = async (req, res) => {
   try {
-    const { coded, number, country, promo = '0', reseller_price } = req.body;
+    const {  coded, number,   reseller_price } = req.body;
     const user = await User.findOne({ email: req.user.email });
     if (!user) return res.status(404).json({ error: 'User not found' });
 
-    // Validate input
-    if (!coded || !number || !country || !reseller_price) {
+    console.log(req.body)
+    
+    if (!coded || !number || !reseller_price) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
     const parsedAmount = parseFloat(reseller_price);
@@ -28,6 +29,11 @@ export const buyData = async (req, res) => {
       return res.status(400).json({ error: 'Insufficient wallet balance' });
     }
 
+    const  provider= coded.split('_')[0]
+    const country = "NG"
+
+   
+
     // Generate unique reference
     const reference = `mcd_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     const existingData = await Data.findOne({ ref: reference }); // Updated to Data
@@ -35,38 +41,35 @@ export const buyData = async (req, res) => {
       return res.status(400).json({ error: 'Duplicate transaction reference' });
     }
 
-    // Validate phone number and data plan (using /validate endpoint)
+      console.log(MCD_TOKEN, "your token")
+    // Validate phone number/service (using /validate endpoint)
     const validateResponse = await fetch(`${MCD_API_URL}/validate`, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${MCD_API_TOKEN}`,
+        'Authorization': `Bearer ${MCD_TOKEN}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        service: 'data',
-        provider: coded.split('_')[0], // Extract provider from coded
+        service: 'airtime',
+        provider,
         number,
       }),
     });
 
     if (!validateResponse.ok) {
+      console.log(validateResponse)
       throw new Error(`Validation failed: ${validateResponse.status}`);
     }
-
-    const validateResult = await validateResponse.json();
-    if (!validateResult.success) {
-      return res.status(400).json({ error: validateResult.message || 'Invalid phone number or data plan' });
-    }
-
+   
     // Create data transaction record (pending)
     const data = new Data({ // Updated to Data
       userId: user._id,
       coded,
       provider: coded.split('_')[0], // Store provider part of coded
       number,
-      country,
+      country: "NG",
       payment: 'wallet',
-      promo,
+      promo: "0",
       ref: reference,
       reseller_price: parsedAmount,
       status: 'pending',
@@ -81,16 +84,16 @@ export const buyData = async (req, res) => {
     const response = await fetch(`${MCD_API_URL}/data`, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${MCD_API_TOKEN}`,
+        'Authorization': `Bearer ${MCD_TOKEN}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
         coded,
         number,
         payment: 'wallet',
-        promo,
+        promo:"0",
         ref: reference,
-        country,
+        country: "NG",
         reseller_price: parsedAmount.toString(),
       }),
     });
@@ -120,7 +123,7 @@ export const buyData = async (req, res) => {
       timestamp: new Date(),
     });
     await user.save();
-
+console.log(result)
     res.json({ success: true, message: 'Data purchase successful', reference });
   } catch (error) {
     console.error('Data purchase error:', error);

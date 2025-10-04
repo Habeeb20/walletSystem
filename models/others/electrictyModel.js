@@ -1,19 +1,17 @@
 import mongoose from "mongoose";
 
-const dataSchema = new mongoose.Schema({
+const electricitySchema = new mongoose.Schema({
   userId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",
     required: true,
   },
-  coded: {
-    type: String,
-    required: true,
-  },
+
   provider: {
     type: String,
-    required: false, 
-    // enum: ["MTN", "Airtel", "Glo", "9mobile"], 
+    required: true, 
+    default:"ikeja-electric"
+
   },
   number: {
     type: String,
@@ -40,10 +38,10 @@ const dataSchema = new mongoose.Schema({
     required: true,
     unique: true,
   },
-  reseller_price: {
+  amount: {
     type: Number,
     required: true,
-    min: 0,
+    min: 500,
   },
   status: {
     type: String,
@@ -54,10 +52,43 @@ const dataSchema = new mongoose.Schema({
     type: Date,
     default: Date.now,
   },
-  dataPlanDetails: {
+   electricityDetails: {
     type: Object,
     required: false, 
   },
+ 
 });
 
-export default mongoose.model("Data", dataSchema);
+export default mongoose.model("Electricity", electricitySchema);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

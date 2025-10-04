@@ -13,12 +13,13 @@ import AirtimePage from './AirtimePage';
 import DataPage from './DataPage';
 import TransferPage from './TransferPage';
 import axios from 'axios';
+import ElectricityPage from './ElectricityPage';
 
 const Transfer = () => <div><TransferPage /></div>;
 const Data = () => <div><DataPage /></div>;
 const Airtime = () => <div> <AirtimePage/> </div>;
 const CableTV = () => <div>Cable TV Component</div>;
-const Electricity = () => <div>Electricity Component</div>;
+const Electricity = () => <div><ElectricityPage /></div>;
 
 function DashboardContent() {
   const dispatch = useDispatch();
@@ -106,7 +107,7 @@ function DashboardContent() {
     .reduce((sum, t) => sum + t.amount, 0) || 0;
   const recentTransactions = allTransactions
     .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
-    .slice(0, 10) || [];
+    .slice(0, 5) || [];
 
   const handleLogout = () => {
     dispatch(logout());
@@ -153,9 +154,9 @@ function DashboardContent() {
               </div>
             </div>
             <div>
-      <button onClick={handleCheckBalance} disabled={loading}>
+      {/* <button onClick={handleCheckBalance} disabled={loading}>
         Check Balance
-      </button>
+      </button> */}
       {loading && <p>Loading...</p>}
       {error && <p>Error: {error}</p>}
       {checkBalanceData && (
@@ -188,7 +189,7 @@ function DashboardContent() {
           <div>
             <h3 className="text-lg font-semibold text-gray-800">Quick Actions</h3>
             <div className="grid grid-cols-3 gap-4 mt-4">
-              <button
+              {/* <button
                 className="bg-purple-500 text-white p-3 rounded-lg shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 flex items-center justify-center h-16 w-full"
                 onClick={() => {
                   setShowFundingForm(true);
@@ -196,7 +197,7 @@ function DashboardContent() {
                 }}
               >
                 <span className="text-lg">Add Money</span>
-              </button>
+              </button> */}
               <button onClick={() => handleMenuClick(<TransferPage/>, 'transfer')}
                className="bg-orange-500 text-white p-3 rounded-lg shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 flex items-center justify-center h-16 w-full">
                 <span className="text-lg">Transfer</span>
