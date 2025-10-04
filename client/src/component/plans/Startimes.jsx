@@ -1,0 +1,32 @@
+const startimesPlans = [
+  { name: "Nova (Dish) - 1 Month", coded: "nova", price: 2150.00, type: "startimes", status: 1, id: 930 },
+  { name: "Basic (Antenna) - 1 Month", coded: "basic", price: 4050.00, type: "startimes", status: 1, id: 931 },
+  { name: "Basic (Dish) - 1 Month", coded: "smart", price: 5150.00, type: "startimes", status: 1, id: 932 },
+  { name: "Classic (Antenna) - 1 Month", coded: "classic", price: 6050.00, type: "startimes", status: 1, id: 933 },
+  { name: "Super (Dish) - 1 Month", coded: "super", price: 9850.00, type: "startimes", status: 1, id: 934 },
+  { name: "Nova (Antenna) - 1 Week", coded: "nova-weekly", price: 750.00, type: "startimes", status: 1, id: 935 },
+  { name: "Basic (Antenna) - 1 Week", coded: "basic-weekly", price: 1450.00, type: "startimes", status: 1, id: 936 },
+  { name: "Basic (Dish) - 1 Week", coded: "smart-weekly", price: 1750.00, type: "startimes", status: 1, id: 937 },
+  { name: "Classic (Antenna) - 1 Week", coded: "classic-weekly", price: 2050.00, type: "startimes", status: 1, id: 938 },
+  { name: "Super (Dish) - 1 Week", coded: "super-weekly", price: 3350.00, type: "startimes", status: 1, id: 939 },
+  { name: "Chinese (Dish) - 1 Month", coded: "uni-1", price: 21050.00, type: "startimes", status: 1, id: 940 },
+  { name: "Nova (Antenna) - 1 Month", coded: "uni-2", price: 2150.00, type: "startimes", status: 1, id: 941 },
+  { name: "Classic (Dish) - 1 Week", coded: "special-weekly", price: 2350.00, type: "startimes", status: 1, id: 942 },
+  { name: "Classic (Dish) - 1 Month", coded: "special-monthly", price: 7450.00, type: "startimes", status: 1, id: 943 },
+  { name: "Nova (Dish) - 1 Week", coded: "nova-dish-weekly", price: 750.00, type: "startimes", status: 1, id: 944 },
+  { name: "Super (Antenna) - 1 Week", coded: "super-antenna-weekly", price: 3250.00, type: "startimes", status: 1, id: 945 },
+  { name: "Super (Antenna) - 1 Month", coded: "super-antenna-monthly", price: 9550.00, type: "startimes", status: 1, id: 946 },
+  { name: "Classic (Dish) - 1 Week", coded: "classic-weekly-dish", price: 2550.00, type: "startimes", status: 1, id: 947 },
+  { name: "Global (Dish) - 1 Month", coded: "global-monthly-dish", price: 21050.00, type: "startimes", status: 1, id: 948 },
+  { name: "Global (Dish) - 1 Week", coded: "global-weekly-dish", price: 7050.00, type: "startimes", status: 1, id: 949 },
+  { name: "Startimes SHS - Weekly", coded: "shs-weekly-2800", price: 2850.00, type: "startimes", status: 1, id: 950 },
+  { name: "Startimes SHS - Weekly", coded: "shs-weekly-4620", price: 4670.00, type: "startimes", status: 1, id: 951 },
+  { name: "Startimes SHS - Weekly", coded: "shs-weekly-4900", price: 4950.00, type: "startimes", status: 1, id: 952 },
+  { name: "Startimes SHS - Weekly", coded: "shs-weekly-9100", price: 9150.00, type: "startimes", status: 1, id: 953 },
+  { name: "Startimes SHS - Monthly", coded: "shs-monthly-12000", price: 12050.00, type: "startimes", status: 1, id: 954 },
+  { name: "Startimes SHS - Monthly", coded: "shs-monthly-19800", price: 19850.00, type: "startimes", status: 1, id: 955 },
+  { name: "Startimes SHS - Monthly", coded: "shs-monthly-21000", price: 21050.00, type: "startimes", status: 1, id: 956 },
+  { name: "Startimes SHS - Monthly", coded: "shs-monthly-39000", price: 39050.00, type: "startimes", status: 1, id: 957 }
+];
+
+export default startimesPlans;
