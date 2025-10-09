@@ -596,7 +596,7 @@ const handlePaylonyAccountSubmit = async (e) => {
         </div>
 
         {/* Customer Details Card */}
-        <div className="bg-white rounded-lg shadow-lg p-6 transform transition-all duration-300 hover:shadow-xl">
+        <div className=" rounded-lg shadow-lg p-6 transform transition-all duration-300 hover:shadow-xl">
           <h2 className="text-2xl font-bold text-black mb-4">Customer Profile</h2>
           {loading ? (
             <div className="text-center text-gray-500">Loading details...</div>

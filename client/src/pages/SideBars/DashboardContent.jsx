@@ -379,7 +379,7 @@ import TransferPage from './TransferPage';
 import axios from 'axios';
 import ElectricityPage from './ElectricityPage';
 import TvSubscriptionPage from './TvSubscriptionPage';
-
+import Profile from './Profile';
 function DashboardContent({ handleMenuClick }) { // Receive handleMenuClick as prop
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -580,10 +580,10 @@ function DashboardContent({ handleMenuClick }) { // Receive handleMenuClick as p
                 <span className="text-lg">Airtime to Cash</span>
               </button>
               <button
-                onClick={() => handleMenuClick(<div>Bonus to Wallet Component</div>, 'Bonus to Wallet')}
+                onClick={() => handleMenuClick(<div><Profile /></div>, 'Profile')}
                 className="bg-purple-600 text-white p-3 rounded-lg shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 flex items-center justify-center h-16 w-full cursor-pointer"
               >
-                <span className="text-lg">Bonus to Wallet</span>
+                <span className="text-lg">Fund Wallet</span>
               </button>
               <button
                 onClick={() => handleMenuClick(<div>Bulk SMS Component</div>, 'Bulk SMS')}
