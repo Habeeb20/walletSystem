@@ -30,8 +30,9 @@ const LoginPage = () => {
         }
       })
       .catch((err) => {
-        if (err.error) {
-          enqueueSnackbar(`Login failed: ${err.error} at ${new Date().toLocaleString('en-US', { timeZone: 'Africa/Lagos' })}`, { variant: 'error' });
+        if (err) {
+          console.log(err)
+          enqueueSnackbar(`Login failed: ${err.response} at ${new Date().toLocaleString('en-US', { timeZone: 'Africa/Lagos' })}`, { variant: 'error' });
         } else {
           enqueueSnackbar(`Login failed: ${err.message || 'Unknown error'} at ${new Date().toLocaleString('en-US', { timeZone: 'Africa/Lagos' })}`, { variant: 'error' });
         }

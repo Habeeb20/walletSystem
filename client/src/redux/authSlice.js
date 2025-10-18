@@ -221,7 +221,7 @@ const authSlice = createSlice({
       .addCase(registerUser.fulfilled, (state, action) => {
         state.loading = false;
         state.token = action.payload.token;
-        console.log('Registration successful, token set:', state.token);
+
       })
       .addCase(registerUser.rejected, (state, action) => {
         state.loading = false;
@@ -234,7 +234,7 @@ const authSlice = createSlice({
       .addCase(loginUser.fulfilled, (state, action) => {
         state.loading = false;
         state.token = action.payload.token;
-        console.log('Login successful, token set:', state.token);
+
       })
       .addCase(loginUser.rejected, (state, action) => {
         state.loading = false;

@@ -304,11 +304,11 @@ const Dashboard = () => {
   // Initialize content after function definitions
   const [content, setContent] = useState(<DashboardContent handleMenuClick={handleMenuClick} />);
 
-  console.log(token, 'your token');
+
 
   useEffect(() => {
     const token = localStorage.getItem('token');
-    console.log('Token used:', token);
+ 
     if (token) {
       dispatch(fetchDashboard(token));
     }

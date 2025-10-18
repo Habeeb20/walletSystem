@@ -207,7 +207,10 @@ export const loginWithPassword = async (req, res) => {
  
       const { email, password } = req.body;
       const user = await User.findOne({ email });
-      if (!user) return res.status(404).json({ error: "User not found" });
+      if (!user) {
+        console.log("user not found")
+        return res.status(404).json({ error: "User not found" });
+      } 
 
       if (!user.isEmailVerified) {
         return res.status(403).json({ error: "Email verification required" });
