@@ -503,7 +503,7 @@ function DashboardContent({ handleMenuClick }) { // Receive handleMenuClick as p
             </div>
             <div>
               {loading && <WalletLoadingAnimation />}
-              {error && <p className="text-red-500 text-center mb-4 font-medium">{error}</p>}
+              {/* {error && <p className="text-red-500 text-center mb-4 font-medium">{error}</p>} */}
               {checkBalanceData && (
                 <div className="mt-4 bg-gray-50 p-4 rounded-lg">
                   <p className="text-gray-700">Balance: ₦{checkBalanceData.balance}</p>
