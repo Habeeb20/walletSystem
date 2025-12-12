@@ -1,4 +1,12 @@
-/* eslint-disable no-unused-vars */
+// /* eslint-disable no-unused-vars */
+
+
+
+
+
+
+
+
 
 
 
@@ -9,21 +17,21 @@
 // import { useSelector, useDispatch } from 'react-redux';
 // import { useSnackbar } from 'notistack';
 // import WalletAnimation from '../../resources/wallet';
-// import { fetchWalletBalance } from '../../redux/store/airtimeSlice';
+// import { fetchWalletBalance } from '../../redux/walletSlice';
+
 // import { NIGERIAN_BANKS } from '../../../../utils/banks';
 // import { verifyAccount, transferFunds,
 //   clearError,
 //   clearVerifiedAccount, } from '../../redux/store/transferSlice';
 
-
 // function TransferPage() {
 //   const navigate = useNavigate();
 //   const dispatch = useDispatch();
 //   const { enqueueSnackbar } = useSnackbar();
-//   const {  walletBalance } = useSelector((state) => state.wallet);
-//   const { dashboardData, token } = useSelector((state) => state.auth);
+//  const token = useSelector((state) => state.auth.token) || localStorage.getItem('token');
+//   const { walletBalance, loading: walletLoading } = useSelector((state) => state.wallet);
+//   const { dashboardData,  } = useSelector((state) => state.auth);
 //   const { loading, error, verifiedAccount } = useSelector((state) => state.transfer);
-
 
 //   const [recipient, setRecipient] = useState('');
 //   const [bankCode, setBankCode] = useState('');
@@ -32,14 +40,14 @@
 //   const [verifying, setVerifying] = useState(false);
 //   const [showConfirmModal, setShowConfirmModal] = useState(false);
 
+//   // Fetch wallet balance on mount
+//   useEffect(() => {
+//     if (token) {
+//       dispatch(fetchWalletBalance(token));
+//     }
+//   }, [dispatch, token]);
 
-//     useEffect(() => {
-//       if (token) {
-//         dispatch(fetchWalletBalance(token));
-//       }
-//     }, [dispatch, token]);
-
-//   // Auto-clear error snackbar
+//   // Show non-network errors as snackbar
 //   useEffect(() => {
 //     if (error) {
 //       const isNetwork = error.includes('Network') || error.includes('Failed to fetch');
@@ -50,28 +58,38 @@
 //     }
 //   }, [error, enqueueSnackbar, dispatch]);
 
-//   // Debounced account verification
+//   // Verify account IMMEDIATELY when 10 digits are entered
 //   useEffect(() => {
-//     const timer = setTimeout(() => {
-//       const digits = recipient.replace(/\D/g, '');
-//       if (digits.length === 10 && bankCode && token) {
-//         setVerifying(true);
-//         dispatch(verifyAccount({ bank_code: bankCode, account_number: digits, token }))
-//           .unwrap()
-//           .then(() => {
-//             setShowConfirmModal(true);
-//           })
-//           .catch(() => {
-//             dispatch(clearVerifiedAccount());
-//           })
-//           .finally(() => setVerifying(false));
-//       } else {
-//         dispatch(clearVerifiedAccount());
-//       }
-//     }, 800);
+//     const digits = recipient.replace(/\D/g, '');
 
-//     return () => clearTimeout(timer);
-//   }, [recipient, bankCode, token, dispatch]);
+//     // Trigger verification only when exactly 10 digits and bank is selected
+//     if (digits.length === 10 && bankCode && token && !verifying) {
+//       setVerifying(true);
+//       dispatch(
+//         verifyAccount({
+//           bank_code: bankCode,
+//           account_number: digits,
+//           token,
+//         })
+//       )
+//         .unwrap()
+//         .then(() => {
+//           setShowConfirmModal(true); // Auto-open confirm modal on success
+//         })
+//         .catch(() => {
+//           dispatch(clearVerifiedAccount());
+//         })
+//         .finally(() => {
+//           setVerifying(false);
+//         });
+//     } else {
+//       // Clear verification if input is invalid
+//       if (verifiedAccount) {
+//         dispatch(clearVerifiedAccount());
+//         setShowConfirmModal(false);
+//       }
+//     }
+//   }, [recipient, bankCode, token, dispatch, verifying, verifiedAccount]);
 
 //   const handleTransfer = () => {
 //     if (!verifiedAccount || !token) return;
@@ -104,20 +122,22 @@
 //         navigate('/dashboard');
 //       })
 //       .catch(() => {
-//         // error already shown via slice
+//         // Error already handled in slice
 //       });
 //   };
 
 //   return (
 //     <div className="p-4 sm:p-6 md:p-8 min-h-screen bg-gray-100 flex items-center justify-center">
-//       {(loading || verifying) && <WalletAnimation />}
+//       {(loading || verifying || walletLoading) && <WalletAnimation />}
 
 //       <div className="w-full max-w-lg bg-white p-6 sm:p-8 rounded-2xl shadow-lg">
 //         <div className="flex justify-between items-center mb-6">
 //           <h2 className="text-2xl font-poppins font-bold text-gray-800">Transfer Money</h2>
 //           <div className="text-right">
 //             <p className="text-xs text-gray-500">Wallet Balance</p>
-//             <p className="text-lg font-semibold text-green-600">₦{walletBalance.toLocaleString()}</p>
+//             <p className="text-lg font-semibold text-green-600">
+//               ₦{walletBalance?.toLocaleString() || '0'}
+//             </p>
 //           </div>
 //         </div>
 
@@ -148,20 +168,26 @@
 //             <input
 //               type="text"
 //               value={recipient}
-//               onChange={(e) => setRecipient(e.target.value.replace(/\D/g, '').slice(0, 10))}
+//               onChange={(e) => {
+//                 const value = e.target.value.replace(/\D/g, '').slice(0, 10);
+//                 setRecipient(value);
+//               }}
 //               className="w-full p-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-600 bg-gray-50"
-//               placeholder="10-digit account number"
+//               placeholder="Enter 10-digit account number"
 //               maxLength={10}
 //               required
 //             />
 //             {verifying && (
 //               <p className="mt-1 text-xs text-blue-600 animate-pulse">Verifying account...</p>
 //             )}
+//             {!verifying && recipient.length === 10 && !verifiedAccount && (
+//               <p className="mt-1 text-xs text-red-600">Invalid account</p>
+//             )}
 //           </div>
 
 //           {/* Verified Account Info */}
 //           {verifiedAccount && (
-//             <div className="p-3 bg-green-50 border border-green-200 rounded-lg text-sm">
+//             <div className="p-3 bg-green-50 border border-green-200 rounded-lg text-sm animate-fadeIn">
 //               <strong>{verifiedAccount.account_name}</strong>
 //               <br />
 //               {verifiedAccount.bank_name} – {verifiedAccount.account_number}
@@ -222,11 +248,21 @@
 //             <h3 className="text-lg font-bold text-gray-800 mb-4">Confirm Transfer</h3>
 
 //             <div className="space-y-2 text-sm">
-//               <p><strong>To:</strong> {verifiedAccount.account_name}</p>
-//               <p><strong>Bank:</strong> {verifiedAccount.bank_name}</p>
-//               <p><strong>Account:</strong> {verifiedAccount.account_number}</p>
-//               <p><strong>Amount:</strong> ₦{parseFloat(amount).toLocaleString()}</p>
-//               <p><strong>Narration:</strong> {narration}</p>
+//               <p>
+//                 <strong>To:</strong> {verifiedAccount.account_name}
+//               </p>
+//               <p>
+//                 <strong>Bank:</strong> {verifiedAccount.bank_name}
+//               </p>
+//               <p>
+//                 <strong>Account:</strong> {verifiedAccount.account_number}
+//               </p>
+//               <p>
+//                 <strong>Amount:</strong> ₦{parseFloat(amount).toLocaleString()}
+//               </p>
+//               <p>
+//                 <strong>Narration:</strong> {narration}
+//               </p>
 //             </div>
 
 //             <div className="flex gap-3 mt-6">
@@ -255,17 +291,8 @@
 
 
 
-
-
-
-
-
-
-
-
-
 // src/pages/SideBars/TransferPage.jsx
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { useSnackbar } from 'notistack';
@@ -281,17 +308,21 @@ function TransferPage() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { enqueueSnackbar } = useSnackbar();
- const token = useSelector((state) => state.auth.token) || localStorage.getItem('token');
+  const token = useSelector((state) => state.auth.token) || localStorage.getItem('token');
   const { walletBalance, loading: walletLoading } = useSelector((state) => state.wallet);
-  const { dashboardData,  } = useSelector((state) => state.auth);
   const { loading, error, verifiedAccount } = useSelector((state) => state.transfer);
 
   const [recipient, setRecipient] = useState('');
   const [bankCode, setBankCode] = useState('');
   const [amount, setAmount] = useState('');
   const [narration, setNarration] = useState('');
+
   const [verifying, setVerifying] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
+
+  // Search state for the bank input
+  const [bankSearch, setBankSearch] = useState('');
+  const [showBankDropdown, setShowBankDropdown] = useState(false);
 
   // Fetch wallet balance on mount
   useEffect(() => {
@@ -300,7 +331,7 @@ function TransferPage() {
     }
   }, [dispatch, token]);
 
-  // Show non-network errors as snackbar
+  // Show non-network errors
   useEffect(() => {
     if (error) {
       const isNetwork = error.includes('Network') || error.includes('Failed to fetch');
@@ -311,11 +342,10 @@ function TransferPage() {
     }
   }, [error, enqueueSnackbar, dispatch]);
 
-  // Verify account IMMEDIATELY when 10 digits are entered
+  // Auto verify when 10 digits + bank selected
   useEffect(() => {
     const digits = recipient.replace(/\D/g, '');
 
-    // Trigger verification only when exactly 10 digits and bank is selected
     if (digits.length === 10 && bankCode && token && !verifying) {
       setVerifying(true);
       dispatch(
@@ -327,7 +357,7 @@ function TransferPage() {
       )
         .unwrap()
         .then(() => {
-          setShowConfirmModal(true); // Auto-open confirm modal on success
+          setShowConfirmModal(true);
         })
         .catch(() => {
           dispatch(clearVerifiedAccount());
@@ -336,7 +366,6 @@ function TransferPage() {
           setVerifying(false);
         });
     } else {
-      // Clear verification if input is invalid
       if (verifiedAccount) {
         dispatch(clearVerifiedAccount());
         setShowConfirmModal(false);
@@ -374,14 +403,24 @@ function TransferPage() {
         });
         navigate('/dashboard');
       })
-      .catch(() => {
-        // Error already handled in slice
-      });
+      .catch(() => {});
   };
+
+  // Filtered banks based on search
+  const filteredBanks = useMemo(() => {
+    if (!bankSearch) return NIGERIAN_BANKS;
+    const lower = bankSearch.toLowerCase();
+    return NIGERIAN_BANKS.filter(bank =>
+      bank.name.toLowerCase().includes(lower)
+    );
+  }, [bankSearch]);
+
+  // Get currently selected bank name for display
+  const selectedBankName = NIGERIAN_BANKS.find(b => b.code === bankCode)?.name || '';
 
   return (
     <div className="p-4 sm:p-6 md:p-8 min-h-screen bg-gray-100 flex items-center justify-center">
-      {(loading || verifying || walletLoading) && <WalletAnimation />}
+      {(loading || verifying || verifying || walletLoading) && <WalletAnimation />}
 
       <div className="w-full max-w-lg bg-white p-6 sm:p-8 rounded-2xl shadow-lg">
         <div className="flex justify-between items-center mb-6">
@@ -395,22 +434,49 @@ function TransferPage() {
         </div>
 
         <form onSubmit={(e) => e.preventDefault()} className="space-y-5">
-          {/* Bank Select */}
-          <div>
+
+          {/* SEARCHABLE BANK INPUT */}
+          <div className="relative">
             <label className="block text-gray-700 text-sm font-semibold mb-2">Select Bank</label>
-            <select
-              value={bankCode}
-              onChange={(e) => setBankCode(e.target.value)}
-              className="w-full p-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-600 bg-gray-50"
-              required
-            >
-              <option value="">-- Choose Bank --</option>
-              {NIGERIAN_BANKS.map((b) => (
-                <option key={b.code} value={b.code}>
-                  {b.name}
-                </option>
-              ))}
-            </select>
+            <div className="relative">
+              <input
+                type="text"
+                value={bankSearch || selectedBankName}
+                onChange={(e) => {
+                  setBankSearch(e.target.value);
+                  setShowBankDropdown(true);
+                  // If user clears the input, reset selection
+                  if (!e.target.value) setBankCode('');
+                }}
+                onFocus={() => setShowBankDropdown(true)}
+                placeholder="Search or select bank..."
+                className="w-full p-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-600 bg-gray-50"
+                autoComplete="off"
+              />
+              {/* Dropdown */}
+              {showBankDropdown && filteredBanks.length > 0 && (
+                <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg max-h-64 overflow-y-auto">
+                  {filteredBanks.map((bank) => (
+                    <div
+                      key={bank.code}
+                      onClick={() => {
+                        setBankCode(bank.code);
+                        setBankSearch('');
+                        setShowBankDropdown(false);
+                      }}
+                      className="px-4 py-3 hover:bg-green-50 cursor-pointer transition"
+                    >
+                      {bank.name}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+            {showBankDropdown && filteredBanks.length === 0 && bankSearch && (
+              <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg p-4 text-center text-gray-500">
+                No bank found
+              </div>
+            )}
           </div>
 
           {/* Account Number */}
@@ -425,6 +491,7 @@ function TransferPage() {
                 const value = e.target.value.replace(/\D/g, '').slice(0, 10);
                 setRecipient(value);
               }}
+            
               className="w-full p-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-600 bg-gray-50"
               placeholder="Enter 10-digit account number"
               maxLength={10}
@@ -477,6 +544,7 @@ function TransferPage() {
 
           {/* Send Button */}
           <button
+            
             type="button"
             onClick={() => setShowConfirmModal(true)}
             disabled={!verifiedAccount || loading || !amount || !narration}
@@ -501,21 +569,11 @@ function TransferPage() {
             <h3 className="text-lg font-bold text-gray-800 mb-4">Confirm Transfer</h3>
 
             <div className="space-y-2 text-sm">
-              <p>
-                <strong>To:</strong> {verifiedAccount.account_name}
-              </p>
-              <p>
-                <strong>Bank:</strong> {verifiedAccount.bank_name}
-              </p>
-              <p>
-                <strong>Account:</strong> {verifiedAccount.account_number}
-              </p>
-              <p>
-                <strong>Amount:</strong> ₦{parseFloat(amount).toLocaleString()}
-              </p>
-              <p>
-                <strong>Narration:</strong> {narration}
-              </p>
+              <p><strong>To:</strong> {verifiedAccount.account_name}</p>
+              <p><strong>Bank:</strong> {verifiedAccount.bank_name}</p>
+              <p><strong>Account:</strong> {verifiedAccount.account_number}</p>
+              <p><strong>Amount:</strong> ₦{parseFloat(amount).toLocaleString()}</p>
+              <p><strong>Narration:</strong> {narration}</p>
             </div>
 
             <div className="flex gap-3 mt-6">
