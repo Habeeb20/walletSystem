@@ -209,7 +209,7 @@ export const verifyAccount = async (req, res) => {
     });
 
   } catch (err) {
-    console.error('Verify account error:', err);
+    console.error('account verification error oocurred ', err);
     res.status(500).json({ error: 'Service temporarily unavailable' });
   }
 };
