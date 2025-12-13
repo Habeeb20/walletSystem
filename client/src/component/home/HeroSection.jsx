@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { motion } from 'framer-motion';
 import MobileDevice from './MobileDevice';
-import im from "./../../assets/Rich 💰 Mindset.jpg";
+import im from "./../../assets/bank.jpeg";
 
 const HeroSection = () => {
   useEffect(() => {
@@ -78,9 +78,7 @@ const HeroSection = () => {
             </button>
             </a>
         
-            <button className="bg-transparent border-2 border-white text-white px-6 py-3 rounded mb-6 hover:bg-white hover:text-green-700">
-              Link Bank Account
-            </button>
+      
           </motion.div>
         </motion.div>
         {/* Mobile Device on the Right */}
