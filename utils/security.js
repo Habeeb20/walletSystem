@@ -68,7 +68,7 @@ export async function sendEmailVerificationCode(email, code) {
     });
 
     await transporter.sendMail({
-      from: `"WalletApp" <${EMAIL_USER}>`,
+      from: `"Flexipay" <${EMAIL_USER}>`,
       to: email,
       subject: 'Verify Your Email',
       text: `Your verification code is: ${code}`,

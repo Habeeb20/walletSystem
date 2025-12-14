@@ -269,54 +269,68 @@ export const fetchDashboard = async (req, res) => {
   }
 };
 
-export const initiateResetPassword = async(req, res) => {
+
+
+
+export const initiateResetPassword = async (req, res) => {
   try {
-    const {email} = req.body
-    await resetPasswordLimiter(req,res, async() => {
-      const user = await User.findOne({email});
-      if(!user) return res.status(404).json({message: "user's email not found"})
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ message: 'Email is required' });
 
+    const user = await User.findOne({ email });
+    if (!user) {
+      // Don't reveal if email exists
+      return res.json({ message: 'If the email exists, a reset code has been sent.' });
+    }
 
-    const resetCode = generate4DigitCode()
+    const resetCode = generate4DigitCode();
     user.emailVerificationCode = resetCode;
-    await user.save()
-    await sendEmailVerificationCode(email, resetCode)
+    await user.save();
 
-    verificationCodes.set(user._id.toString(), resetCode)
-    res.json({message: "password reset code sent to email"})
-    })
+    // Store temporarily (expires in 10 mins – you can add TTL with Redis)
+    verificationCodes.set(user._id.toString(), {
+      code: resetCode,
+      expiresAt: Date.now() + 10 * 60 * 1000,
+    });
+
+    await sendEmailVerificationCode(email, resetCode); // your existing function
+
+    res.json({ message: 'Reset code sent to your email.' });
   } catch (error) {
-    console.log(error)
-    res.status(500).json({message:"an error occurred "})
+    console.error(error);
+    res.status(500).json({ message: 'Server error' });
   }
-}
+};
 
-
-
-export const resetPassword = async(req, res) => {
+export const resetPassword = async (req, res) => {
   try {
-    await validationResetPasswordInput(req, res, async() => {
-      const {email, code, newPassword} = req.body;
-      const user = await User.findOne({email})
-      if(!user) return res.status(404).json({message:"user not found"})
-      
-      const storedCode = verificationCodes.get(user._id,toString())
-      if(!storedCode || storedCode !== code) return res.status(404).json({message:"reset code is not valid"})
+    const { email, code, newPassword } = req.body;
+    if (!email || !code || !newPassword) {
+      return res.status(400).json({ message: 'All fields are required' });
+    }
 
-      user.password = await hashPassword(newPassword);
-      user.emailVerificationCode = null;
-      await user.save();
-      verificationCodes.delete(user._id.toString())
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
 
-      res.json({message: 'password reset successfully'})
-    })
+    const stored = verificationCodes.get(user._id.toString());
+    if (!stored || stored.code !== code || Date.now() > stored.expiresAt) {
+      return res.status(400).json({ message: 'Invalid or expired code' });
+    }
+
+    user.password = await hashPassword(newPassword);
+    user.emailVerificationCode = null;
+    await user.save();
+
+    verificationCodes.delete(user._id.toString());
+
+    res.json({ message: 'Password reset successfully' });
   } catch (error) {
-    console.log(error)
-    res.status(500).json({error: error.message})
+    console.error(error);
+    res.status(500).json({ message: 'Server error' });
   }
-}
-
-
+};
 
 
 
@@ -460,6 +474,11 @@ export const checkVirtualAccount = async (req, res) => {
     res.status(500).json({ error: `Failed to check virtual account: ${error.message}` });
   }
 };
+
+
+
+
+
 
 
 

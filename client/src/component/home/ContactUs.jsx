@@ -30,31 +30,31 @@ const ContactUs = () => {
     e.preventDefault();
     setSubmitting(true);
 
-    // Simulate sending (replace with real backend)
+    // Simulate sending (replace with real backend call)
     setTimeout(() => {
-      toast.success('Message sent successfully! We\'ll reply within 1 hour.');
+      toast.success("Message sent successfully! We'll reply within 1 hour.");
       setSubmitting(false);
       setFormData({ name: '', email: '', phone: '', subject: '', message: '' });
     }, 1500);
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-green-50 dark:from-gray-900 dark:to-gray-800">
-      <div className="max-w-7xl mx-auto px-4 py-16">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-green-50 py-16 px-4">
+      <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="text-center mb-16">
-          <h1 className="text-5xl font-bold text-gray-900 dark:text-white mb-6">
+          <h1 className="text-5xl font-bold text-gray-900 mb-6">
             Get in Touch
           </h1>
-          <p className="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
+          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
             We're here to help. Reach out via any channel — our team responds fast.
           </p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-          {/* Contact Form */}
-          <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl p-8 lg:p-12">
-            <h2 className="text-3xl font-bold mb-8 text-gray-900 dark:text-white">
+          {/* Contact Form Card */}
+          <div className="bg-white rounded-3xl shadow-2xl p-8 lg:p-12 border border-gray-100">
+            <h2 className="text-3xl font-bold mb-8 text-gray-900">
               Send us a Message
             </h2>
             <form onSubmit={handleSubmit} className="space-y-6">
@@ -66,7 +66,7 @@ const ContactUs = () => {
                   onChange={handleChange}
                   placeholder="Your Full Name"
                   required
-                  className="w-full px-6 py-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 focus:border-[#09a353] focus:ring-4 focus:ring-green-500/20 transition-all"
+                  className="w-full px-6 py-4 rounded-xl border border-gray-200 bg-gray-50 focus:border-[#09a353] focus:ring-4 focus:ring-[#09a353]/20 transition-all outline-none"
                 />
                 <input
                   type="email"
@@ -75,7 +75,7 @@ const ContactUs = () => {
                   onChange={handleChange}
                   placeholder="Email Address"
                   required
-                  className="w-full px-6 py-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 focus:border-[#09a353] focus:ring-4 focus:ring-green-500/20 transition-all"
+                  className="w-full px-6 py-4 rounded-xl border border-gray-200 bg-gray-50 focus:border-[#09a353] focus:ring-4 focus:ring-[#09a353]/20 transition-all outline-none"
                 />
               </div>
 
@@ -85,7 +85,7 @@ const ContactUs = () => {
                 value={formData.phone}
                 onChange={handleChange}
                 placeholder="Phone Number (optional)"
-                className="w-full px-6 py-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 focus:border-[#09a353] focus:ring-4 focus:ring-green-500/20 transition-all"
+                className="w-full px-6 py-4 rounded-xl border border-gray-200 bg-gray-50 focus:border-[#09a353] focus:ring-4 focus:ring-[#09a353]/20 transition-all outline-none"
               />
 
               <input
@@ -95,7 +95,7 @@ const ContactUs = () => {
                 onChange={handleChange}
                 placeholder="Subject"
                 required
-                className="w-full px-6 py-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 focus:border-[#09a353] focus:ring-4 focus:ring-green-500/20 transition-all"
+                className="w-full px-6 py-4 rounded-xl border border-gray-200 bg-gray-50 focus:border-[#09a353] focus:ring-4 focus:ring-[#09a353]/20 transition-all outline-none"
               />
 
               <textarea
@@ -105,13 +105,13 @@ const ContactUs = () => {
                 rows="6"
                 placeholder="How can we help you today?"
                 required
-                className="w-full px-6 py-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 focus:border-[#09a353] focus:ring-4 focus:ring-green-500/20 transition-all resize-none"
+                className="w-full px-6 py-4 rounded-xl border border-gray-200 bg-gray-50 focus:border-[#09a353] focus:ring-4 focus:ring-[#09a353]/20 transition-all resize-none outline-none"
               />
 
               <button
                 type="submit"
                 disabled={submitting}
-                className="w-full bg-[#09a353] hover:bg-green-700 text-white font-bold py-5 rounded-xl flex items-center justify-center gap-3 text-lg transition-all transform hover:scale-105 disabled:opacity-70"
+                className="w-full bg-[#09a353] hover:bg-[#0a5c36] text-white font-bold py-5 rounded-xl flex items-center justify-center gap-3 text-lg transition-all transform hover:scale-105 disabled:opacity-70 disabled:cursor-not-allowed shadow-lg"
               >
                 {submitting ? (
                   <>
@@ -128,10 +128,10 @@ const ContactUs = () => {
             </form>
           </div>
 
-          {/* Contact Info & Map */}
+          {/* Contact Info Section */}
           <div className="space-y-8">
-            <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl p-8">
-              <h2 className="text-3xl font-bold mb-8 text-gray-900 dark:text-white">
+            <div className="bg-white rounded-3xl shadow-2xl p-8 border border-gray-100">
+              <h2 className="text-3xl font-bold mb-8 text-gray-900">
                 Contact Information
               </h2>
               <div className="space-y-6">
@@ -140,7 +140,7 @@ const ContactUs = () => {
                     <Phone className="h-6 w-6 text-[#09a353]" />
                   </div>
                   <div>
-                    <p className="font-semibold text-gray-900 dark:text-white">Phone Support</p>
+                    <p className="font-semibold text-gray-900">Phone Support</p>
                     <p className="text-2xl font-bold text-[#09a353] mt-1">+234 700 000 0000</p>
                     <p className="text-gray-500 mt-1">24/7 Dedicated Line</p>
                   </div>
@@ -151,7 +151,7 @@ const ContactUs = () => {
                     <Mail className="h-6 w-6 text-[#09a353]" />
                   </div>
                   <div>
-                    <p className="font-semibold text-gray-900 dark:text-white">Email</p>
+                    <p className="font-semibold text-gray-900">Email</p>
                     <p className="text-xl text-[#09a353] mt-1">support@yourbank.com</p>
                     <p className="text-gray-500 mt-1">Average response: 30 mins</p>
                   </div>
@@ -162,8 +162,8 @@ const ContactUs = () => {
                     <MapPin className="h-6 w-6 text-[#09a353]" />
                   </div>
                   <div>
-                    <p className="font-semibold text-gray-900 dark:text-white">Head Office</p>
-                    <p className="text-gray-700 dark:text-gray-300 mt-1">
+                    <p className="font-semibold text-gray-900">Head Office</p>
+                    <p className="text-gray-700 mt-1 leading-relaxed">
                       123 Finance Street<br />
                       Victoria Island, Lagos<br />
                       Nigeria
@@ -176,8 +176,8 @@ const ContactUs = () => {
                     <Clock className="h-6 w-6 text-[#09a353]" />
                   </div>
                   <div>
-                    <p className="font-semibold text-gray-900 dark:text-white">Support Hours</p>
-                    <p className="text-gray-700 dark:text-gray-300 mt-1">
+                    <p className="font-semibold text-gray-900">Support Hours</p>
+                    <p className="text-gray-700 mt-1 leading-relaxed">
                       Monday - Sunday: 24 hours<br />
                       We're always here for you
                     </p>
@@ -186,11 +186,11 @@ const ContactUs = () => {
               </div>
             </div>
 
-            {/* Trust Badges */}
-            <div className="bg-gradient-to-r from-[#09a353] to-green-600 rounded-3xl shadow-2xl p-8 text-white text-center">
+            {/* Trust Badge Card */}
+            <div className="bg-gradient-to-r from-[#09a353] to-[#0a5c36] rounded-3xl shadow-2xl p-8 text-white text-center">
               <CheckCircle className="h-16 w-16 mx-auto mb-4" />
               <h3 className="text-2xl font-bold mb-2">Licensed & Regulated</h3>
-              <p className="opacity-90">
+              <p className="opacity-90 leading-relaxed">
                 CBN Licensed Digital Bank • NDIC Insured • PCI DSS Compliant
               </p>
             </div>

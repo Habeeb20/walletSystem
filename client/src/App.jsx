@@ -19,6 +19,7 @@ import NotFound from './resources/NotFound';
 import { useSelector, useDispatch } from 'react-redux';
 import { useState } from 'react';
 import ErrorModal from './component/ErrorModal';
+import ContactUs from './component/home/ContactUs';
 
 const AppContent = () => {
   const location = useLocation();
@@ -43,6 +44,7 @@ const AppContent = () => {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/verifyemail" element={<VerifyEmailPage />} />
         <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/contact" element={<ContactUs />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
       {showHeaderFooter && <Footer />}

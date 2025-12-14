@@ -13,7 +13,7 @@ import walletrouter from "./routes/wallet.route.js";
 import electricityRouter from "./routes/electricty.route.js";
 import tvSubRoute from "./routes/tv.route.js";
 import transferRouter from "./routes/transferRoute.js"
-
+import User from "./models/user/userModel.js"
 connectDB()
 
 
@@ -71,6 +71,18 @@ app.use((err, req, res, next) => {
   console.error("Error:", err.stack);
   res.status(500).json({ status: false, message: "Internal server error" });
 });
+
+
+// await User.create({
+//     fullName: 'Habeeb',
+
+//   email: 'Abeeb@gmail.com',
+//   password: 'Waliyu@bib',
+
+// });
+
+// console.log('Superadmin created!');
+
 
 
 
