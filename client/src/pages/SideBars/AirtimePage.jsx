@@ -135,7 +135,9 @@ const Airtime = () => {
             <div className="p-2 sm:p-3 rounded-lg bg-red-700 text-white font-medium">Airtel *310#</div>
             <div className="p-2 sm:p-3 rounded-lg bg-green-600 text-white font-medium">Glo *310#</div>
           </div>
+               {loading && <WalletLoadingAnimation loading={loading} />}
         </div>
+        
       </div>
     </div>
   );

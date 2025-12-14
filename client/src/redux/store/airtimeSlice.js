@@ -159,9 +159,9 @@ const walletSlice = createSlice({
         state.transactions.push({
           type: 'data',
           reference: action.payload.reference,
-          amount: parseFloat(action.meta.arg.amount),
+          amount: parseFloat(action.meta.arg.price),
           coded: action.meta.arg.coded,
-          number: action.meta.arg.phone,
+          number: action.meta.arg.number,
           status: 'success',
           timestamp: new Date(),
         });

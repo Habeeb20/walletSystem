@@ -126,7 +126,7 @@ export const createPaylonyVirtualAccount = createAsyncThunk(
   'auth/createPaylonyVirtualAccount',
   async ({ token, customerId, firstname, lastname, address, gender, email, phone, dob }, { rejectWithValue }) => {
     try {
-      console.log('Calling Backend to Create Paylony Account with Token:', token);
+      // console.log('Calling Backend to Create Paylony Account with Token:', token);
       const response = await axios.post(
         `${import.meta.env.VITE_BACKEND_URL}/auth/create-paylony-virtual-account`,
         { customerId, firstname, lastname, address, gender, email, phone, dob },
@@ -143,7 +143,7 @@ export const createPaylonyVirtualAccount = createAsyncThunk(
 
 export const fetchPaylonyAccounts = createAsyncThunk('auth/fetchPaylonyAccounts', async (token, { rejectWithValue }) => {
   try {
-    console.log('Fetching Paylony Accounts with Token:', token);
+    // console.log('Fetching Paylony Accounts with Token:', token);
     const response = await axios.get('https://api.paylony.com/api/v1/fetch_all_accounts', {
       headers: { Authorization: `Bearer ${import.meta.env.VITE_PAYLONY_SECRET_KEY}`, 'Content-Type': 'application/json' },
     });

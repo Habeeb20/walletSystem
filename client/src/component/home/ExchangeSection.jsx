@@ -70,7 +70,7 @@ const ExchangeSection = () => {
             Complete Your Profile
           </h3>
           <p className="text-gray-600 text-base leading-relaxed">
-            Add your address, gender, date of birth, and upload a valid ID — takes less than 2 minutes.
+            Add your address, gender and date of birth in Profile section  — takes less than 2 minutes.
           </p>
         </div>
       </div>
