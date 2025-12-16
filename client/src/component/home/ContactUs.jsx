@@ -11,6 +11,9 @@ import {
   Loader2
 } from 'lucide-react';
 import { toast } from 'sonner';
+import axios from 'axios';
+
+const API_BASE = import.meta.env.VITE_BACKEND_URL;
 
 const ContactUs = () => {
   const [formData, setFormData] = useState({
@@ -30,12 +33,32 @@ const ContactUs = () => {
     e.preventDefault();
     setSubmitting(true);
 
-    // Simulate sending (replace with real backend call)
-    setTimeout(() => {
-      toast.success("Message sent successfully! We'll reply within 1 hour.");
-      setSubmitting(false);
+    try {
+      const response = await axios.post(`${API_BASE}/contact`, formData, {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      // Success from backend
+      toast.success(response.data.message || "Message sent successfully! We'll reply soon.");
+      
+      // Reset form
       setFormData({ name: '', email: '', phone: '', subject: '', message: '' });
-    }, 1500);
+    } catch (error) {
+      // Error handling
+      const errorMsg = 
+        error.response?.data?.message || 
+        error.message || 
+        'Failed to send message. Please try again.';
+
+      toast.error('Sending Failed', {
+        description: errorMsg,
+        duration: 6000,
+      });
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -43,7 +66,7 @@ const ContactUs = () => {
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="text-center mb-16">
-          <h1 className="text-5xl font-bold text-gray-900 mb-6">
+          <h1 className="text-5xl mt-5 font-bold text-gray-900 mb-6">
             Get in Touch
           </h1>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">
@@ -66,7 +89,8 @@ const ContactUs = () => {
                   onChange={handleChange}
                   placeholder="Your Full Name"
                   required
-                  className="w-full px-6 py-4 rounded-xl border border-gray-200 bg-gray-50 focus:border-[#09a353] focus:ring-4 focus:ring-[#09a353]/20 transition-all outline-none"
+                  disabled={submitting}
+                  className="w-full px-6 py-4 rounded-xl border border-gray-200 bg-gray-50 focus:border-green-500 focus:ring-4 focus:ring-blue-500/20 transition-all outline-none disabled:opacity-70"
                 />
                 <input
                   type="email"
@@ -75,7 +99,8 @@ const ContactUs = () => {
                   onChange={handleChange}
                   placeholder="Email Address"
                   required
-                  className="w-full px-6 py-4 rounded-xl border border-gray-200 bg-gray-50 focus:border-[#09a353] focus:ring-4 focus:ring-[#09a353]/20 transition-all outline-none"
+                  disabled={submitting}
+                  className="w-full px-6 py-4 rounded-xl border border-gray-200 bg-gray-50 focus:border-green-500 focus:ring-4 focus:ring-blue-500/20 transition-all outline-none disabled:opacity-70"
                 />
               </div>
 
@@ -85,7 +110,8 @@ const ContactUs = () => {
                 value={formData.phone}
                 onChange={handleChange}
                 placeholder="Phone Number (optional)"
-                className="w-full px-6 py-4 rounded-xl border border-gray-200 bg-gray-50 focus:border-[#09a353] focus:ring-4 focus:ring-[#09a353]/20 transition-all outline-none"
+                disabled={submitting}
+                className="w-full px-6 py-4 rounded-xl border border-gray-200 bg-gray-50 focus:border-green-500 focus:ring-4 focus:ring-blue-500/20 transition-all outline-none disabled:opacity-70"
               />
 
               <input
@@ -95,7 +121,8 @@ const ContactUs = () => {
                 onChange={handleChange}
                 placeholder="Subject"
                 required
-                className="w-full px-6 py-4 rounded-xl border border-gray-200 bg-gray-50 focus:border-[#09a353] focus:ring-4 focus:ring-[#09a353]/20 transition-all outline-none"
+                disabled={submitting}
+                className="w-full px-6 py-4 rounded-xl border border-gray-200 bg-gray-50 focus:border-green-500 focus:ring-4 focus:ring-blue-500/20 transition-all outline-none disabled:opacity-70"
               />
 
               <textarea
@@ -105,13 +132,14 @@ const ContactUs = () => {
                 rows="6"
                 placeholder="How can we help you today?"
                 required
-                className="w-full px-6 py-4 rounded-xl border border-gray-200 bg-gray-50 focus:border-[#09a353] focus:ring-4 focus:ring-[#09a353]/20 transition-all resize-none outline-none"
+                disabled={submitting}
+                className="w-full px-6 py-4 rounded-xl border border-gray-200 bg-gray-50 focus:border-green-500 focus:ring-4 focus:ring-green-500/20 transition-all resize-none outline-none disabled:opacity-70"
               />
 
               <button
                 type="submit"
                 disabled={submitting}
-                className="w-full bg-[#09a353] hover:bg-[#0a5c36] text-white font-bold py-5 rounded-xl flex items-center justify-center gap-3 text-lg transition-all transform hover:scale-105 disabled:opacity-70 disabled:cursor-not-allowed shadow-lg"
+                className="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-5 rounded-xl flex items-center justify-center gap-3 text-lg transition-all transform hover:scale-105 disabled:opacity-70 disabled:cursor-not-allowed shadow-lg"
               >
                 {submitting ? (
                   <>
@@ -136,44 +164,30 @@ const ContactUs = () => {
               </h2>
               <div className="space-y-6">
                 <div className="flex items-start gap-5">
-                  <div className="w-12 h-12 bg-[#09a353]/10 rounded-xl flex items-center justify-center flex-shrink-0">
-                    <Phone className="h-6 w-6 text-[#09a353]" />
+                  <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                    <Phone className="h-6 w-6 text-green-500" />
                   </div>
                   <div>
                     <p className="font-semibold text-gray-900">Phone Support</p>
-                    <p className="text-2xl font-bold text-[#09a353] mt-1">+234 700 000 0000</p>
+                    <p className="text-2xl font-bold text-green-500 mt-1">+2348166489562</p>
                     <p className="text-gray-500 mt-1">24/7 Dedicated Line</p>
                   </div>
                 </div>
 
                 <div className="flex items-start gap-5">
-                  <div className="w-12 h-12 bg-[#09a353]/10 rounded-xl flex items-center justify-center flex-shrink-0">
-                    <Mail className="h-6 w-6 text-[#09a353]" />
+                  <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                    <Mail className="h-6 w-6 text-green-500" />
                   </div>
                   <div>
                     <p className="font-semibold text-gray-900">Email</p>
-                    <p className="text-xl text-[#09a353] mt-1">support@yourbank.com</p>
+                    <p className="text-xl text-green-500 mt-1">Atechsoftwares1@gmail.com</p>
                     <p className="text-gray-500 mt-1">Average response: 30 mins</p>
                   </div>
                 </div>
 
                 <div className="flex items-start gap-5">
-                  <div className="w-12 h-12 bg-[#09a353]/10 rounded-xl flex items-center justify-center flex-shrink-0">
-                    <MapPin className="h-6 w-6 text-[#09a353]" />
-                  </div>
-                  <div>
-                    <p className="font-semibold text-gray-900">Head Office</p>
-                    <p className="text-gray-700 mt-1 leading-relaxed">
-                      123 Finance Street<br />
-                      Victoria Island, Lagos<br />
-                      Nigeria
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-5">
-                  <div className="w-12 h-12 bg-[#09a353]/10 rounded-xl flex items-center justify-center flex-shrink-0">
-                    <Clock className="h-6 w-6 text-[#09a353]" />
+                  <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                    <Clock className="h-6 w-6 text-green-500" />
                   </div>
                   <div>
                     <p className="font-semibold text-gray-900">Support Hours</p>
@@ -187,7 +201,7 @@ const ContactUs = () => {
             </div>
 
             {/* Trust Badge Card */}
-            <div className="bg-gradient-to-r from-[#09a353] to-[#0a5c36] rounded-3xl shadow-2xl p-8 text-white text-center">
+            <div className="bg-gradient-to-r from-green-500 to-green-600 rounded-3xl shadow-2xl p-8 text-white text-center">
               <CheckCircle className="h-16 w-16 mx-auto mb-4" />
               <h3 className="text-2xl font-bold mb-2">Licensed & Regulated</h3>
               <p className="opacity-90 leading-relaxed">

@@ -13,6 +13,7 @@ import walletrouter from "./routes/wallet.route.js";
 import electricityRouter from "./routes/electricty.route.js";
 import tvSubRoute from "./routes/tv.route.js";
 import transferRouter from "./routes/transferRoute.js"
+import contactRoutes from "./routes/contactRoutes.js"
 import User from "./models/user/userModel.js"
 connectDB()
 
@@ -66,6 +67,7 @@ app.use("/api/airtime", airtimerouter)
 app.use("/api/electricty", electricityRouter)
 app.use("/api/tv", tvSubRoute)
 app.use("/api/transfer", transferRouter)
+app.use("/api/contact", contactRoutes)
 // Error handling
 app.use((err, req, res, next) => {
   console.error("Error:", err.stack);

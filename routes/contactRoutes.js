@@ -1,13 +1,23 @@
-// routes/contact.js  (or inside your existing routes file)
-import express from 'express';
-import User from '../models/user/userModel.js';
 
-import { sendContactEmail } from '../utils/email.js'; // you'll create this
+
+
+
+
+
+
+
+
+
+// routes/contact.js
+import express from 'express';
+import ContactMessage from '../models/user/contactMessage.js';
+
+import { sendContactEmail } from '../utils/security.js';
 
 const router = express.Router();
 
 // POST /api/contact
-router.post('/contact', async (req, res) => {
+router.post('/', async (req, res) => {
   try {
     const { name, email, phone, subject, message } = req.body;
 
@@ -16,22 +26,46 @@ router.post('/contact', async (req, res) => {
       return res.status(400).json({ message: 'Please fill all required fields' });
     }
 
-    // Optional: Save to DB (you can create a ContactMessage model or just log)
-    // For now we'll just send the email
+    // 1. Save to database FIRST (so it's never lost)
+    const contactMessage = new ContactMessage({
+      name: name.trim(),
+      email: email.trim().toLowerCase(),
+      phone: phone?.trim() || null,
+      subject: subject.trim(),
+      message: message.trim(),
+    });
 
-    // Send email to admin/support
-    await sendContactEmail({
+    await contactMessage.save();
+
+    // 2. Try to send email (fire-and-forget style — don't fail the request if email fails)
+    sendContactEmail({
       fromName: name,
       fromEmail: email,
       phone: phone || 'Not provided',
       subject,
       message,
-    });
+    })
+      .then(async () => {
+        // If successful, update DB record
+        contactMessage.emailSent = true;
+        contactMessage.status = 'sent';
+        await contactMessage.save();
+        console.log(`Contact email sent for message ID: ${contactMessage._id}`);
+      })
+      .catch(async (emailError) => {
+        console.error('Failed to send contact email:', emailError);
+        // Update status even if email failed
+        contactMessage.status = 'failed';
+        await contactMessage.save();
+      });
 
-    res.json({ message: 'Message received! We will get back to you soon.' });
+    // 3. Always return success to user (message is safely stored)
+    res.json({
+      message: 'Thank you! Your message has been received. We\'ll get back to you soon.',
+    });
   } catch (err) {
     console.error('Contact form error:', err);
-    res.status(500).json({ message: 'Failed to send message. Please try again.' });
+    res.status(500).json({ message: 'Server error. Please try again later.' });
   }
 });
 

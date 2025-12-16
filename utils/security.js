@@ -367,3 +367,79 @@ export const resetPasswordLimiter = rateLimit({
   max:3,
   message:'Too many password reset requests, please try again later'
 })
+
+
+
+
+
+
+const transporter = nodemailer.createTransport({
+  host: process.env.SMTP_HOST || 'smtp.gmail.com', 
+  port: parseInt(process.env.SMTP_PORT) || 587,
+  secure: false,
+  auth: {
+    user: process.env.EMAIL_USER, 
+    pass: process.env.EMAIL_PASS, 
+  },
+  tls: {
+    rejectUnauthorized: false,
+  },
+});
+
+
+export const sendContactEmail = async ({
+  fromName,
+  fromEmail,
+  phone,
+  subject,
+  message,
+}) => {
+  try {
+    const mailOptions = {
+      from: `"Contact Form" <${process.env.EMAIL_USER}>`,
+      to: process.env.SUPPORT_EMAIL || 'support@yourapp.com', 
+      replyTo: fromEmail,
+      subject: `New Contact Message: ${subject}`,
+      text: `
+New message from ${fromName}
+
+Email: ${fromEmail}
+Phone: ${phone}
+
+Subject: ${subject}
+
+Message:
+${message}
+      `.trim(),
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 12px;">
+          <h2 style="color: #3b82f6;">New Contact Form Submission</h2>
+          <hr style="border: 1px solid #e0e0e0; margin: 20px 0;">
+          
+          <p><strong>Name:</strong> ${fromName}</p>
+          <p><strong>Email:</strong> <a href="mailto:${fromEmail}" style="color: #3b82f6;">${fromEmail}</a></p>
+          <p><strong>Phone:</strong> ${phone}</p>
+          <p><strong>Subject:</strong> ${subject}</p>
+          
+          <hr style="border: 1px solid #e0e0e0; margin: 20px 0;">
+          
+          <h3>Message:</h3>
+          <p style="background: #f8f9fa; padding: 16px; border-radius: 8px; white-space: pre-wrap;">
+            ${message.replace(/\n/g, '<br>')}
+          </p>
+          
+          <hr style="border: 1px solid #e0e0e0; margin: 30px 0;">
+          <p style="color: #666; font-size: 12px;">
+            This message was sent via the contact form on your website.
+          </p>
+        </div>
+      `.trim(),
+    };
+
+    await transporter.sendMail(mailOptions);
+    console.log('Contact email sent successfully');
+  } catch (error) {
+    console.error('Failed to send contact email:', error);
+    throw new Error('Email sending failed');
+  }
+};
