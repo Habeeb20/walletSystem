@@ -165,7 +165,7 @@ const HelpSupport = () => {
               <h3 className="text-xl font-bold mb-2">Email Support</h3>
               <p className="text-gray-600 ">Response within 1 hour</p>
               <a href="mailto:support@yourbank.com" className="text-[#09a353] font-semibold underline">
-                atechsoftwares1@gmail.com
+                support@codequor.com
               </a>
             </div>
           </div>

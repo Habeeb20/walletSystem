@@ -10,6 +10,7 @@ dotenv.config();
 const MCD_API_URL =  'https://reseller.mcd.5starcompany.com.ng/api/v1';
 const MCD_API_TOKEN = process.env.MCD_API_TOKEN;
 const MCD_TOKEN = process.env.MCD_TOKEN
+
 export const buyData = async (req, res) => {
   try {
     const {  coded, number,   reseller_price } = req.body;

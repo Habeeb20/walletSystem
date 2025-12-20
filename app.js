@@ -15,6 +15,7 @@ import tvSubRoute from "./routes/tv.route.js";
 import transferRouter from "./routes/transferRoute.js"
 import contactRoutes from "./routes/contactRoutes.js"
 import User from "./models/user/userModel.js"
+import adminRouter from './routes/AdminRoutes.js';
 connectDB()
 
 
@@ -68,6 +69,7 @@ app.use("/api/electricty", electricityRouter)
 app.use("/api/tv", tvSubRoute)
 app.use("/api/transfer", transferRouter)
 app.use("/api/contact", contactRoutes)
+app.use('/api/admin', adminRouter);
 // Error handling
 app.use((err, req, res, next) => {
   console.error("Error:", err.stack);

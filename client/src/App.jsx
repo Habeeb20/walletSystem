@@ -20,6 +20,8 @@ import { useSelector, useDispatch } from 'react-redux';
 import { useState } from 'react';
 import ErrorModal from './component/ErrorModal';
 import ContactUs from './component/home/ContactUs';
+import AdminLogin from './pages/admin/adminLogin';
+import AdminDashboard from './pages/admin/AdminDashboard';
 
 const AppContent = () => {
   const location = useLocation();
@@ -46,6 +48,8 @@ const AppContent = () => {
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/contact" element={<ContactUs />} />
         <Route path="*" element={<NotFound />} />
+        <Route path="/admin/login" element={<AdminLogin />} />
+<Route path="/admin/dashboard" element={<AdminDashboard />} />
       </Routes>
       {showHeaderFooter && <Footer />}
 

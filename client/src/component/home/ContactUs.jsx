@@ -180,7 +180,7 @@ const ContactUs = () => {
                   </div>
                   <div>
                     <p className="font-semibold text-gray-900">Email</p>
-                    <p className="text-xl text-green-500 mt-1">Atechsoftwares1@gmail.com</p>
+                    <p className="text-xl text-green-500 mt-1">support@codequor.com</p>
                     <p className="text-gray-500 mt-1">Average response: 30 mins</p>
                   </div>
                 </div>

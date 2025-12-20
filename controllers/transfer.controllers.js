@@ -95,67 +95,6 @@ console.log(result)
 
 
 
-// export const verifyAccount = async (req, res) => {
-//   try {
-//     const { bank_code, account_number } = req.body;
-
-//     if (!bank_code || !account_number) {
-//       return res.status(400).json({ error: 'bank_code and account_number are required' });
-//     }
-
-//     // Find bank using the short code (what frontend sends)
-//     const bank = NIGERIAN_BANKS.find(b => b.code === bank_code);
-
-//     if (!bank) {
-//       return res.status(400).json({ error: 'Invalid bank selected' });
-//     }
-
-//     // THIS IS THE FIX → Use longcode, not short code
-//     const paylonyBankCode = bank.longcode;
-
-//     console.log(paylonyBankCode, "your long code ")
-
-//     if (!paylonyBankCode) {
-//       return res.status(500).json({ error: 'Bank configuration error (missing longcode)' });
-//     }
-
-//     const response = await fetch(PAYLONY_VERIFY_URL, {
-//       method: 'POST',
-//       headers: {
-//         'Authorization': `Bearer ${PAYLONY_TOKEN}`,
-//         'Content-Type': 'application/json',
-//       },
-//       body: JSON.stringify({
-//         bank_code: paylonyBankCode,     // ← Use longcode here
-//         account_number: account_number,
-//       }),
-//     });
-
-//     const data = await response.json();
-
-//     console.log('Paylony response:', data);
-
-//     if (!response.ok || data.success === false) {
-//       return res.status(400).json({
-//         error: data.message || 'Unable to verify account. Check details and try again.',
-//       });
-//     }
-
-//     // Success
-//     res.json({
-//       account_name: data.account_name || data.data?.account_name,
-//       account_number: data.account_number || account_number,
-//       bank_name: bank.name,
-//       bank_code: bank_code, // send short code back to frontend
-//     });
-
-//   } catch (err) {
-//     console.error('Verify account error:', err);
-//     res.status(500).json({ error: 'Server error. Please try again.' });
-//   }
-// };
-
-
 export const verifyAccount = async (req, res) => {
   try {
     const { bank_code, account_number } = req.body;
