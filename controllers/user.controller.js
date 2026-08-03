@@ -70,6 +70,61 @@ export const register = async (req, res) => {
 
 
 
+export const verifyEmail = async (req, res) => {
+  try {
+    const { email, code } = req.body;
+
+      const user = await User.findOne({ email });
+      if (!user) return res.status(404).json({ error: "User not found" });
+
+      if(code !== user.emailVerificationCode){
+          console.log("the code is not correct")
+         return res.status(400).json({ error: "Invalid verification code" });
+      }
+
+    
+      user.isEmailVerified = true;
+      user.emailVerificationCode = null;
+      await user.save();
+      verificationCodes.delete(user._id.toString());
+
+      res.json({ message: "Email verified successfully" });
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: error.message });
+  }
+};
+
+
+
+// Login with email and password
+export const loginWithPassword = async (req, res) => {
+  try {
+ 
+      const { email, password } = req.body;
+      const user = await User.findOne({ email });
+      if (!user) {
+        console.log("user not found")
+        return res.status(404).json({ error: "User not found" });
+      } 
+
+      if (!user.isEmailVerified) {
+        return res.status(403).json({ error: "Email verification required" });
+      }
+
+      const isValidPassword = await verifyPassword(password, user.password);
+      if (!isValidPassword) return res.status(401).json({ error: "Invalid credentials" });
+
+      const token = generateJwtToken(user._id, user.email);
+      res.json({ token });
+  
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: error.message });
+  }
+};
+
 
 
 
@@ -116,34 +171,6 @@ export const registerBiometrics = async (req, res) => {
     user.biometricKeyId = publicKey;
     await user.save();
     res.json({ message: "Biometric registration successful" });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: error.message });
-  }
-};
-
-
-
-export const verifyEmail = async (req, res) => {
-  try {
-    const { email, code } = req.body;
-
-      const user = await User.findOne({ email });
-      if (!user) return res.status(404).json({ error: "User not found" });
-
-      if(code !== user.emailVerificationCode){
-          console.log("the code is not correct")
-         return res.status(400).json({ error: "Invalid verification code" });
-      }
-
-    
-      user.isEmailVerified = true;
-      user.emailVerificationCode = null;
-      await user.save();
-      verificationCodes.delete(user._id.toString());
-
-      res.json({ message: "Email verified successfully" });
-
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: error.message });
@@ -200,33 +227,6 @@ export const loginWithBiometrics = async (req, res) => {
 };
 
 
-
-// Login with email and password
-export const loginWithPassword = async (req, res) => {
-  try {
- 
-      const { email, password } = req.body;
-      const user = await User.findOne({ email });
-      if (!user) {
-        console.log("user not found")
-        return res.status(404).json({ error: "User not found" });
-      } 
-
-      if (!user.isEmailVerified) {
-        return res.status(403).json({ error: "Email verification required" });
-      }
-
-      const isValidPassword = await verifyPassword(password, user.password);
-      if (!isValidPassword) return res.status(401).json({ error: "Invalid credentials" });
-
-      const token = generateJwtToken(user._id, user.email);
-      res.json({ token });
-  
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: error.message });
-  }
-};
 
 
 
