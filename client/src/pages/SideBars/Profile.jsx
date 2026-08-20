@@ -12,6 +12,7 @@ import WalletLoadingAnimation from '../../resources/wallet';
 const Profile = () => {
   const dispatch = useDispatch();
   const { loading, customerDetails, error, virtualAccountCompleted, paylonyAccounts } = useSelector((state) => state.auth);
+  console.log(customerDetails)
   const token = localStorage.getItem('token');
   const [showVirtualAccountForm, setShowVirtualAccountForm] = useState(false);
   const [showPaylonyAccountForm, setShowPaylonyAccountForm] = useState(false);
@@ -29,11 +30,6 @@ const Profile = () => {
 
   const { enqueueSnackbar } = useSnackbar();
 
-  console.log('Virtual Account Completed:', virtualAccountCompleted);
-  console.log('Customer Details:', customerDetails);
-  console.log('Paylony Accounts:', paylonyAccounts);
-  console.log('Loading State:', loading);
-  console.log('ENV Details:', import.meta.env);
 
   useEffect(() => {
     const timer = setTimeout(() => {

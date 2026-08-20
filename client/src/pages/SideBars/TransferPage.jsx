@@ -298,8 +298,8 @@ import { useSelector, useDispatch } from 'react-redux';
 import { useSnackbar } from 'notistack';
 import WalletAnimation from '../../resources/wallet';
 import { fetchWalletBalance } from '../../redux/walletSlice';
+import { NIGERIAN_BANKS } from '../../../../backend/utils/banks';
 
-import { NIGERIAN_BANKS } from '../../../../utils/banks';
 import { verifyAccount, transferFunds,
   clearError,
   clearVerifiedAccount, } from '../../redux/store/transferSlice';
