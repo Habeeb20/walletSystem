@@ -65,7 +65,7 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 // Routes
 app.get("/", (req, res) => {
-  res.send("wallet backend is listening on port....");
+  res.send("wallet backend is running on port....");
 });
 
 
