@@ -20,7 +20,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { useState } from 'react';
 import ErrorModal from './component/ErrorModal';
 import ContactUs from './component/home/ContactUs';
-import AdminLogin from './pages/admin/adminLogin';
+import AdminLogin from './pages/admin/AdminLogin';
 import AdminDashboard from './pages/admin/AdminDashboard';
 
 const AppContent = () => {
