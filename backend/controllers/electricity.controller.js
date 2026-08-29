@@ -264,6 +264,9 @@ const MCD_TOKEN = process.env.MCD_TOKEN
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
+
+
+
 export const buyElectricity = async (req, res) => {
   try {
     const { number, amount } = req.body;
