@@ -1,21 +1,17 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import axios from 'axios';
+import api from '../../component/utils/axiosInstance';
 
 export const buyElectricity = createAsyncThunk(
   'electricity/buyElectricity',
-  async ({ provider, meterNumber, amount, token }, { rejectWithValue }) => {
+  async ({ provider, meterNumber, amount }, { rejectWithValue }) => {
     try {
-      const response = await axios.post(
-        `${import.meta.env.VITE_BACKEND_URL}/electricity/buy-electricity`, 
-        {
-          provider,
-          number: meterNumber,
-          amount: amount.toString(),
-          country: 'NG',
-          promo: '0',
-        },
-        { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } }
-      );
+      const response = await api.post('/electricity/buy-electricity', {
+        provider,
+        number: meterNumber,
+        amount: amount.toString(),
+        country: 'NG',
+        promo: '0',
+      });
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response?.data?.error || 'Failed to purchase electricity');
@@ -62,36 +58,3 @@ const electricitySlice = createSlice({
 
 export const { clearError } = electricitySlice.actions;
 export default electricitySlice.reducer;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

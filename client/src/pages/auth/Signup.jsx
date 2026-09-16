@@ -188,7 +188,7 @@ const SignupPage = () => {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [agreeTerms, setAgreeTerms] = useState(false);
-  const { loading, error, token } = useSelector((state) => state.auth);
+  const { loading, error } = useSelector((state) => state.auth);
   const dispatch = useDispatch();
   const { enqueueSnackbar } = useSnackbar();
   const navigate = useNavigate()
@@ -205,15 +205,10 @@ const SignupPage = () => {
     const userData = { fullName, phone, email, password };
     dispatch(registerUser(userData))
       .unwrap()
-      .then((response) => {
+      .then(() => {
         enqueueSnackbar('Registration successful!', { variant: 'success' });
-        if (response.token) {
-          enqueueSnackbar('Token received', { variant: 'info' });
-          // enqueueSnackbar(`Token received: ${response.token}`, { variant: 'info' });
-          localStorage.setItem("email", userData.email)
-
-          navigate("/verifyemail")
-        }
+        localStorage.setItem("email", userData.email)
+        navigate("/verifyemail")
       })
     .catch((err) => {
   if (err.error) {

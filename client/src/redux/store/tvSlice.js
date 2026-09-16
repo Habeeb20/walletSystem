@@ -1,21 +1,17 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import axios from 'axios';
+import api from '../../component/utils/axiosInstance';
 
 export const buyTvSubscription = createAsyncThunk(
   'tvSubscription/buyTvSubscription',
-  async ({ coded, number, price, token }, { rejectWithValue }) => {
+  async ({ coded, number, price }, { rejectWithValue }) => {
     try {
-      const response = await axios.post(
-        `${import.meta.env.VITE_BACKEND_URL}/tv/buy-tv-subscription`,
-        {
-          coded,
-          number,
-          reseller_price: price.toString(),
-          country: 'NG',
-          promo: '0',
-        },
-        { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } }
-      );
+      const response = await api.post('/tv/buy-tv-subscription', {
+        coded,
+        number,
+        reseller_price: price.toString(),
+        country: 'NG',
+        promo: '0',
+      });
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response?.data?.error || 'Failed to purchase TV subscription');

@@ -11,7 +11,7 @@ const LoginPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const { loading, error, token } = useSelector((state) => state.auth);
+  const { loading, error } = useSelector((state) => state.auth);
   const dispatch = useDispatch();
   const { enqueueSnackbar } = useSnackbar();
   const navigate = useNavigate()
@@ -21,13 +21,10 @@ const LoginPage = () => {
     const userData = { email, password };
     dispatch(loginUser(userData))
       .unwrap()
-      .then((response) => {
+      .then(() => {
         enqueueSnackbar('Login successful!', { variant: 'success' });
-        if (response.token) {
-          // enqueueSnackbar('Token received', { variant: 'info' });
-          localStorage.setItem("token", response.token)
-          navigate("/dashboard")
-        }
+        // The backend sets an httpOnly auth cookie on success — nothing to store client-side.
+        navigate("/dashboard")
       })
       .catch((err) => {
         if (err) {

@@ -14,7 +14,6 @@ function ElectricityPage() {
   const dispatch = useDispatch();
   const { loading, error, transactions } = useSelector((state) => state.electricity);
   const { walletBalance } = useSelector((state) => state.wallet); // From wallet slice
-  const token = useSelector((state) => state.auth.token) || localStorage.getItem('token');
   const { enqueueSnackbar } = useSnackbar();
 
   const [meterNumber, setMeterNumber] = useState('');
@@ -24,10 +23,8 @@ function ElectricityPage() {
   const predefinedAmounts = [500, 1000, 2000, 2500, 3000, 3500, 4000];
 
   useEffect(() => {
-    if (token) {
-      dispatch(fetchWalletBalance(token));
-    }
-  }, [dispatch, token]);
+    dispatch(fetchWalletBalance());
+  }, [dispatch]);
 
   const handleAmountSelect = (selectedAmount) => {
     setAmount(selectedAmount.toString());
@@ -55,11 +52,10 @@ function ElectricityPage() {
           provider: selectedProvider,
           meterNumber,
           amount: parsedAmount,
-          token,
         })
       ).unwrap();
       enqueueSnackbar('Electricity purchase successful', { variant: 'success' });
-      dispatch(fetchWalletBalance(token));
+      dispatch(fetchWalletBalance());
       setMeterNumber('');
       setAmount('');
       navigate('/dashboard');

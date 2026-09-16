@@ -18,7 +18,6 @@ function TvSubscriptionPage() {
   const dispatch = useDispatch();
   const { loading, error, transactions } = useSelector((state) => state.tvSubscription || { loading: false, error: null, transactions: [] });
   const { walletBalance } = useSelector((state) => state.wallet || { walletBalance: 0 });
-  const token = useSelector((state) => state.auth?.token) || localStorage.getItem('token');
   const { enqueueSnackbar } = useSnackbar();
 
   const [number, setNumber] = useState('');
@@ -34,13 +33,11 @@ function TvSubscriptionPage() {
   };
 
   useEffect(() => {
-    if (token) {
-      dispatch(fetchWalletBalance(token));
-    }
+    dispatch(fetchWalletBalance());
     return () => {
       dispatch(clearError());
     };
-  }, [dispatch, token]);
+  }, [dispatch]);
 
   const categorizePlan = (plan) => {
     const lowerName = plan.name.toLowerCase();
@@ -81,11 +78,10 @@ function TvSubscriptionPage() {
           coded: selectedPlan.coded,
           number,
           price: selectedPlan.price,
-          token,
         })
       ).unwrap();
       enqueueSnackbar('TV subscription purchase successful', { variant: 'success' });
-      dispatch(fetchWalletBalance(token));
+      dispatch(fetchWalletBalance());
       setNumber('');
       setSelectedPlan(null);
       navigate('/dashboard');

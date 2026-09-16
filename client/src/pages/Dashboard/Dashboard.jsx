@@ -34,7 +34,7 @@
 /* eslint-disable no-unused-vars */
 import { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchDashboard, logout } from '../../redux/authSlice';
+import { fetchDashboard, logout, logoutUser } from '../../redux/authSlice';
 import WalletLoadingAnimation from '../../resources/wallet';
 import { useNavigate } from 'react-router-dom';
 import ProfilePage from '../SideBars/Profile';
@@ -62,7 +62,6 @@ const Dashboard = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { loading, dashboardData } = useSelector((state) => state.auth);
-  const token = localStorage.getItem('token');
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [activeMenu, setActiveMenu] = useState('Dashboard');
 
@@ -87,27 +86,24 @@ const Dashboard = () => {
 
 
 
+  // With cookie-based auth there's no client-readable token to check for — instead we
+  // just ask the backend for the dashboard. The httpOnly cookie is sent automatically;
+  // if it's missing/expired the request 401s and we redirect to login.
   useEffect(() => {
-    const token = localStorage.getItem('token');
- 
-    if (token) {
-      dispatch(fetchDashboard(token));
-    }
-  }, [dispatch, token]);
+    dispatch(fetchDashboard())
+      .unwrap()
+      .catch(() => {
+        navigate('/login');
+      });
+  }, [dispatch, navigate]);
 
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.get('status') === 'success') {
-      dispatch(fetchDashboard(token));
+      dispatch(fetchDashboard());
       window.history.replaceState({}, document.title, window.location.pathname);
     }
-  }, [dispatch, token]);
-
-  useEffect(() => {
-    if (!token) {
-      navigate('/login');
-    }
-  }, [token, navigate]);
+  }, [dispatch]);
 
   useEffect(() => {
     if (dashboardData?.user?.fullName) {
@@ -116,9 +112,11 @@ const Dashboard = () => {
   }, [dashboardData]);
 
   const handleLogout = () => {
-    dispatch(logout());
-    localStorage.removeItem('token');
-    navigate('/login');
+    dispatch(logoutUser()).finally(() => {
+      dispatch(logout());
+      localStorage.removeItem('userFullName');
+      navigate('/login');
+    });
   };
 
   const baseClasses = 'block py-2.5 px-4 text-gray-700 hover:bg-gray-200 flex items-center';

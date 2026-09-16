@@ -298,7 +298,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { useSnackbar } from 'notistack';
 import WalletAnimation from '../../resources/wallet';
 import { fetchWalletBalance } from '../../redux/walletSlice';
-import { NIGERIAN_BANKS } from '../../../../backend/utils/banks';
+import { NIGERIAN_BANKS } from '../../resources/banks';
 
 import { verifyAccount, transferFunds,
   clearError,
@@ -308,7 +308,6 @@ function TransferPage() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { enqueueSnackbar } = useSnackbar();
-  const token = useSelector((state) => state.auth.token) || localStorage.getItem('token');
   const { walletBalance, loading: walletLoading } = useSelector((state) => state.wallet);
   const { loading, error, verifiedAccount } = useSelector((state) => state.transfer);
 
@@ -326,10 +325,8 @@ function TransferPage() {
 
   // Fetch wallet balance on mount
   useEffect(() => {
-    if (token) {
-      dispatch(fetchWalletBalance(token));
-    }
-  }, [dispatch, token]);
+    dispatch(fetchWalletBalance());
+  }, [dispatch]);
 
   // Show non-network errors
   useEffect(() => {
@@ -346,13 +343,12 @@ function TransferPage() {
   useEffect(() => {
     const digits = recipient.replace(/\D/g, '');
 
-    if (digits.length === 10 && bankCode && token && !verifying) {
+    if (digits.length === 10 && bankCode && !verifying) {
       setVerifying(true);
       dispatch(
         verifyAccount({
           bank_code: bankCode,
           account_number: digits,
-          token,
         })
       )
         .unwrap()
@@ -371,10 +367,10 @@ function TransferPage() {
         setShowConfirmModal(false);
       }
     }
-  }, [recipient, bankCode, token, dispatch, verifying, verifiedAccount]);
+  }, [recipient, bankCode, dispatch, verifying, verifiedAccount]);
 
   const handleTransfer = () => {
-    if (!verifiedAccount || !token) return;
+    if (!verifiedAccount) return;
 
     const transferAmount = parseFloat(amount);
     if (isNaN(transferAmount) || transferAmount <= 0) {
@@ -393,7 +389,6 @@ function TransferPage() {
         narration,
         bank_code: verifiedAccount.bank_code,
         bank_name: verifiedAccount.bank_name,
-        token,
       })
     )
       .unwrap()

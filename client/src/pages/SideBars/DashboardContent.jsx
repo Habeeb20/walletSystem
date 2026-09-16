@@ -18,7 +18,7 @@ import { useNavigate } from 'react-router-dom';
 import AirtimePage from './AirtimePage';
 import DataPage from './DataPage';
 import TransferPage from './TransferPage';
-import axios from 'axios';
+import api from '../../component/utils/axiosInstance';
 import ElectricityPage from './ElectricityPage';
 import TvSubscriptionPage from './TvSubscriptionPage';
 import Profile from './Profile';
@@ -28,7 +28,6 @@ function DashboardContent({ handleMenuClick }) { // Receive handleMenuClick as p
   const navigate = useNavigate();
   const { walletBalance, checkBalanceData } = useSelector((state) => state.wallet || {});
   const { loading, dashboardData, error } = useSelector((state) => state.auth || {});
-  const token = localStorage.getItem('token');
   const [fundingAmount, setFundingAmount] = useState('');
   const [fundingUrl, setFundingUrl] = useState(null);
   const [fundingReference, setFundingReference] = useState(null);
@@ -36,24 +35,17 @@ function DashboardContent({ handleMenuClick }) { // Receive handleMenuClick as p
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const handleCheckBalance = () => {
-    dispatch(checkWalletBalance(token));
+    dispatch(checkWalletBalance());
   };
 
   useEffect(() => {
-    if (token) {
-      dispatch(fetchDashboard(token));
-      dispatch(fetchWalletBalance(token));
-    }
-  }, [dispatch, token]);
+    dispatch(fetchDashboard());
+    dispatch(fetchWalletBalance());
+  }, [dispatch]);
 
   const fetchPaylonyTransactions = async () => {
     try {
-      const response = await axios.get(
-        `${import.meta.env.VITE_BACKEND_URL}/wallet/fetch-paylony-transactions`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
+      const response = await api.get('/wallet/fetch-paylony-transactions');
       if (response.data.success && response.data.wallet) {
         dispatch({ type: 'auth/updateWalletBalance', payload: { amount: response.data.wallet.balance } });
       }
@@ -64,15 +56,12 @@ function DashboardContent({ handleMenuClick }) { // Receive handleMenuClick as p
 
   const updateSpecificTransaction = async () => {
     try {
-      const response = await axios.get(
-        `${import.meta.env.VITE_BACKEND_URL}/wallet/fetch-and-update-balance/202509061722427362561/paylony`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
+      const response = await api.get(
+        '/wallet/fetch-and-update-balance/202509061722427362561/paylony'
       );
       if (response.data.success) {
         dispatch({ type: 'auth/updateWalletBalance', payload: { amount: response.data.walletBalance } });
-        dispatch(fetchDashboard(token));
+        dispatch(fetchDashboard());
       }
     } catch (error) {
       console.error('Error updating specific transaction:', error);
@@ -81,7 +70,7 @@ function DashboardContent({ handleMenuClick }) { // Receive handleMenuClick as p
 
   useEffect(() => {
     fetchPaylonyTransactions();
-  }, [token]);
+  }, []);
 
   const walletBalanceFromData = dashboardData?.user?.wallet?.balance || 0;
   const virtualBalance = dashboardData?.user?.paylonyVirtualAccountDetails?.balance || 0;
@@ -112,13 +101,13 @@ function DashboardContent({ handleMenuClick }) { // Receive handleMenuClick as p
   };
 
   const handleFundWallet = async () => {
-    if (!token || !fundingAmount || parseFloat(fundingAmount) <= 0) {
+    if (!fundingAmount || parseFloat(fundingAmount) <= 0) {
       alert('Please enter a valid amount');
       return;
     }
     try {
       const result = await dispatch(
-        fundWallet({ token, amount: parseFloat(fundingAmount) })
+        fundWallet({ amount: parseFloat(fundingAmount) })
       ).unwrap();
       setFundingUrl(result.url);
       setFundingReference(result.reference);

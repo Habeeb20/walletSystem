@@ -1,18 +1,14 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import axios from 'axios';
+import api from '../../component/utils/axiosInstance';
 
 export const verifyAccount = createAsyncThunk(
   'transfer/verifyAccount',
-  async ({ bank_code, account_number, token }, { rejectWithValue }) => {
+  async ({ bank_code, account_number }, { rejectWithValue }) => {
     try {
-      const response = await axios.post(
-        `${import.meta.env.VITE_BACKEND_URL}/transfer/verify-account`,
-        { bank_code, account_number },
-        { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } }
-      );
+      const response = await api.post('/transfer/verify-account', { bank_code, account_number });
       return response.data;
     } catch (error) {
-        console.log(error)
+      console.log(error);
       return rejectWithValue(error.response?.data?.error || 'Failed to verify account');
     }
   }
@@ -20,19 +16,15 @@ export const verifyAccount = createAsyncThunk(
 
 export const transferFunds = createAsyncThunk(
   'transfer/transferFunds',
-  async ({ account_number, amount, narration, bank_code, bank_name, token }, { rejectWithValue }) => {
+  async ({ account_number, amount, narration, bank_code, bank_name }, { rejectWithValue }) => {
     try {
-      const response = await axios.post(
-        `${import.meta.env.VITE_BACKEND_URL}/transfer/transferfunds`,
-        {
-          account_number,
-          amount: amount.toString(),
-          narration,
-          bank_code,
-          bank_name,
-        },
-        { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } }
-      );
+      const response = await api.post('/transfer/transferfunds', {
+        account_number,
+        amount: amount.toString(),
+        narration,
+        bank_code,
+        bank_name,
+      });
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response?.data?.error || 'Failed to transfer funds');

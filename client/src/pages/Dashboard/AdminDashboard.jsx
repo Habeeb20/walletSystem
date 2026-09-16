@@ -2,7 +2,7 @@
 // components/AdminDashboard.jsx
 import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
-import axios from 'axios';
+import api from '../../component/utils/axiosInstance';
 
 const AdminDashboard = () => {
   const [users, setUsers] = useState([]);
@@ -13,8 +13,8 @@ const AdminDashboard = () => {
     const fetchData = async () => {
       try {
         const [usersRes, transRes] = await Promise.all([
-          axios.get('/api/admin/users', { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }),
-          axios.get('/api/admin/transactions', { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }),
+          api.get('/admin/users'),
+          api.get('/admin/transactions'),
         ]);
         setUsers(usersRes.data);
         setTransactions(transRes.data);

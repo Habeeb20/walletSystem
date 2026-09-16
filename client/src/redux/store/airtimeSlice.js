@@ -1,13 +1,11 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import axios from 'axios';
+import api from '../../component/utils/axiosInstance';
 
 export const fetchWalletBalance = createAsyncThunk(
   'wallet/fetchWalletBalance',
-  async (token, { rejectWithValue }) => {
+  async (_, { rejectWithValue }) => {
     try {
-      const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/wallet/wallet-balance`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const response = await api.get('/wallet/wallet-balance');
       return response.data.balance;
     } catch (error) {
       return rejectWithValue(error.response?.data?.error || 'Failed to fetch wallet balance');
@@ -17,19 +15,15 @@ export const fetchWalletBalance = createAsyncThunk(
 
 export const rechargeAirtime = createAsyncThunk(
   'wallet/rechargeAirtime',
-  async ({ network, amount, phone, token }, { rejectWithValue }) => {
+  async ({ network, amount, phone }, { rejectWithValue }) => {
     try {
-      const response = await axios.post(
-        `${import.meta.env.VITE_BACKEND_URL}/wallet/buy-airtime`,
-        {
-          provider: network,
-          amount: amount.toString(),
-          number: phone,
-          country: 'NG',
-          promo: '0',
-        },
-        { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } }
-      );
+      const response = await api.post('/wallet/buy-airtime', {
+        provider: network,
+        amount: amount.toString(),
+        number: phone,
+        country: 'NG',
+        promo: '0',
+      });
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response?.data?.error || 'Failed to purchase airtime');
@@ -39,19 +33,15 @@ export const rechargeAirtime = createAsyncThunk(
 
 export const buyDataPin = createAsyncThunk(
   'wallet/buyDataPin',
-  async ({ network, amount, phone, token }, { rejectWithValue }) => {
+  async ({ network, amount, phone }, { rejectWithValue }) => {
     try {
-      const response = await axios.post(
-        `${import.meta.env.VITE_BACKEND_URL}/wallet/buy-data-pin`,
-        {
-          provider: network,
-          amount: amount.toString(),
-          number: phone,
-          country: 'NG',
-          promo: '0',
-        },
-        { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } }
-      );
+      const response = await api.post('/wallet/buy-data-pin', {
+        provider: network,
+        amount: amount.toString(),
+        number: phone,
+        country: 'NG',
+        promo: '0',
+      });
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response?.data?.error || 'Failed to purchase data pin');
@@ -61,23 +51,18 @@ export const buyDataPin = createAsyncThunk(
 
 export const buyData = createAsyncThunk(
   'wallet/buyData',
-  async ({ coded, number, price, token }, { rejectWithValue }) => {
+  async ({ coded, number, price }, { rejectWithValue }) => {
     try {
-      const response = await axios.post(
-        `${import.meta.env.VITE_BACKEND_URL}/airtime/buy-data`,
-        {
-          coded,
-          number,
-
-          country: 'NG',
-          promo: '0',
-          reseller_price: price.toString(),
-        },
-        { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } }
-      );
+      const response = await api.post('/airtime/buy-data', {
+        coded,
+        number,
+        country: 'NG',
+        promo: '0',
+        reseller_price: price.toString(),
+      });
       return response.data;
     } catch (error) {
-      console.log(error)
+      console.log(error);
       return rejectWithValue(error.response?.data?.error || 'Failed to purchase data');
     }
   }
@@ -175,41 +160,3 @@ const walletSlice = createSlice({
 
 export const { clearError } = walletSlice.actions;
 export default walletSlice.reducer;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

@@ -215,7 +215,6 @@ function DataPage() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { loading, error, walletBalance, transactions } = useSelector((state) => state.wallet);
-  const token = useSelector((state) => state.auth.token) || localStorage.getItem('token');
   const { enqueueSnackbar } = useSnackbar();
 
   const [number, setNumber] = useState('');
@@ -231,10 +230,8 @@ function DataPage() {
   };
 
   useEffect(() => {
-    if (token) {
-      dispatch(fetchWalletBalance(token));
-    }
-  }, [dispatch, token]);
+    dispatch(fetchWalletBalance());
+  }, [dispatch]);
 
   const categorizePlan = (plan) => {
     const lowerName = plan.name.toLowerCase();
@@ -276,11 +273,10 @@ function DataPage() {
           coded: selectedPlan.coded,
           number,
           price: selectedPlan.price,
-          token,
         })
       ).unwrap();
       enqueueSnackbar('Data purchased successfully', { variant: 'success' });
-      dispatch(fetchWalletBalance(token));
+      dispatch(fetchWalletBalance());
       setNumber('');
       setSelectedPlan(null);
       navigate('/dashboard');

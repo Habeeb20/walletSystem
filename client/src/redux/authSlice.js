@@ -1,121 +1,63 @@
-
-
-
-
-
 /* eslint-disable no-unused-vars */
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import axios from 'axios';
+import api from '../component/utils/axiosInstance';
 
 export const registerUser = createAsyncThunk('auth/register', async (userData, { rejectWithValue }) => {
   try {
-    const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/auth/register`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(userData),
-    });
-    if (!response.ok) throw new Error('Registration failed');
-    const data = await response.json();
-    return data;
+    const response = await api.post('/auth/register', userData);
+    return response.data;
   } catch (error) {
-    return rejectWithValue(error.message);
+    return rejectWithValue(error.response?.data?.error || 'Registration failed');
   }
 });
 
 export const loginUser = createAsyncThunk('auth/login', async (userData, { rejectWithValue }) => {
   try {
-    const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/auth/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(userData),
-    });
-    if (!response.ok) throw new Error('Login failed');
-    const data = await response.json();
-    return data;
+    const response = await api.post('/auth/login', userData);
+    // The backend sets an httpOnly auth cookie on success — nothing to store client-side.
+    return response.data;
   } catch (error) {
-    return rejectWithValue(error.message);
+    return rejectWithValue(error.response?.data?.error || 'Login failed');
   }
 });
 
 export const verifyEmail = createAsyncThunk('auth/verifyemail', async (userData, { rejectWithValue }) => {
   try {
-    const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/auth/verifyemail`, userData, {
-      headers: { 'Content-Type': 'application/json' },
-    });
+    const response = await api.post('/auth/verifyemail', userData);
     return response.data;
   } catch (error) {
     return rejectWithValue(error.response?.data?.message || 'Verification failed');
   }
 });
 
-export const fetchDashboard = createAsyncThunk('auth/fetchDashboard', async (token, { rejectWithValue, dispatch }) => {
+// NOTE: this used to also poll Paystack/Paylony directly from the browser using
+// VITE_PAYSTACK_SECRET_KEY / VITE_PAYLONY_SECRET_KEY — those are SECRET keys and must
+// never ship in frontend code (anyone can read them from the built JS bundle). That
+// verification-and-refresh logic needs to move to a backend endpoint (e.g. your existing
+// /wallet/callback and /wallet/fetch-and-update-balance routes already do this server-side —
+// this thunk now just calls the dashboard endpoint and trusts the backend to have already
+// reconciled pending transactions).
+export const fetchDashboard = createAsyncThunk('auth/fetchDashboard', async (_, { rejectWithValue }) => {
   try {
-    const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/auth/dashboard`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    const data = response.data.data;
-
-    if (data?.user?.wallet?.transactions) {
-      for (const transaction of data.user.wallet.transactions) {
-        if (transaction.status === 'pending' && transaction.provider === 'paystack') {
-          try {
-            const paymentResponse = await axios.get(
-              `https://api.paystack.co/transaction/verify/${transaction.reference}`,
-              { headers: { Authorization: `Bearer ${import.meta.env.VITE_PAYSTACK_SECRET_KEY}` } }
-            );
-            if (paymentResponse.data.status === 'success') {
-              await axios.post(`${import.meta.env.VITE_BACKEND_URL}/wallet/callback?reference=${transaction.reference}`);
-              const refreshedResponse = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/auth/dashboard`, {
-                headers: { Authorization: `Bearer ${token}` },
-              });
-              return refreshedResponse.data.data;
-            }
-          } catch (verifyError) {
-            console.error(`Paystack verification failed for reference ${transaction.reference}:`, verifyError);
-          }
-        } else if (transaction.status === 'pending' && transaction.provider === 'paylony') {
-          await axios.get(`${import.meta.env.VITE_BACKEND_URL}/wallet/fetch-and-update-balance/${transaction.reference}/paylony`, {
-            headers: { Authorization: `Bearer ${token}` },
-          });
-          const refreshedResponse = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/auth/dashboard`, {
-            headers: { Authorization: `Bearer ${token}` },
-          });
-          return refreshedResponse.data.data;
-        }
-      }
-    }
-
-    const paylonyResponse = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/wallet/fetch-paylony-accounts`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    if (paylonyResponse.data.success && paylonyResponse.data.wallet) {
-      data.user.wallet = paylonyResponse.data.wallet;
-    }
-
-    return data;
+    const response = await api.get('/auth/dashboard');
+    return response.data.data;
   } catch (error) {
     return rejectWithValue(error.response?.data?.message || 'Failed to fetch dashboard data');
   }
 });
 
-export const fetchCustomerDetails = createAsyncThunk('auth/fetchCustomerDetails', async (_, { getState, rejectWithValue }) => {
-  const { auth } = getState();
-  const token = auth.token || localStorage.getItem('token');
+export const fetchCustomerDetails = createAsyncThunk('auth/fetchCustomerDetails', async (_, { rejectWithValue }) => {
   try {
-    const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/auth/customer`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    const response = await api.get('/auth/customer');
     return response.data;
   } catch (error) {
     return rejectWithValue(error.response?.data?.message || 'Failed to fetch customer details');
   }
 });
 
-export const createVirtualAccount = createAsyncThunk('auth/createVirtualAccount', async ({ token, customerId }, { rejectWithValue }) => {
+export const createVirtualAccount = createAsyncThunk('auth/createVirtualAccount', async ({ customerId }, { rejectWithValue }) => {
   try {
-    const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/auth/create-virtual-account`, { customerId }, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    const response = await api.post('/auth/create-virtual-account', { customerId });
     return response.data;
   } catch (error) {
     return rejectWithValue(error.response?.data?.message || 'Failed to create virtual account');
@@ -124,62 +66,56 @@ export const createVirtualAccount = createAsyncThunk('auth/createVirtualAccount'
 
 export const createPaylonyVirtualAccount = createAsyncThunk(
   'auth/createPaylonyVirtualAccount',
-  async ({ token, customerId, firstname, lastname, address, gender, email, phone, dob }, { rejectWithValue }) => {
+  async ({ customerId, firstname, lastname, address, gender, email, phone, dob }, { rejectWithValue }) => {
     try {
-      // console.log('Calling Backend to Create Paylony Account with Token:', token);
-      const response = await axios.post(
-        `${import.meta.env.VITE_BACKEND_URL}/auth/create-paylony-virtual-account`,
-        { customerId, firstname, lastname, address, gender, email, phone, dob },
-        { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } }
-      );
-      console.log('Backend Response for Paylony Creation:', response.data);
+      const response = await api.post('/auth/create-paylony-virtual-account', {
+        customerId, firstname, lastname, address, gender, email, phone, dob,
+      });
       return response.data.virtual_account;
     } catch (error) {
-      console.error('Paylony Creation Error:', error.response?.data || error.message);
       return rejectWithValue(error.response?.data?.error || 'Failed to create Paylony virtual account');
     }
   }
 );
 
-export const fetchPaylonyAccounts = createAsyncThunk('auth/fetchPaylonyAccounts', async (token, { rejectWithValue }) => {
-  try {
-    // console.log('Fetching Paylony Accounts with Token:', token);
-    const response = await axios.get('https://api.paylony.com/api/v1/fetch_all_accounts', {
-      headers: { Authorization: `Bearer ${import.meta.env.VITE_PAYLONY_SECRET_KEY}`, 'Content-Type': 'application/json' },
-    });
-    console.log('Paylony Accounts Response:', response.data);
-    return response.data;
-  } catch (error) {
-    console.error('Paylony Accounts Fetch Error:', {
-      status: error.response?.status,
-      data: error.response?.data,
-      message: error.message,
-    });
-    return rejectWithValue(error.response?.data?.message || 'Failed to fetch Paylony accounts');
-  }
-});
+// REMOVED: this thunk previously called https://api.paylony.com directly from the browser
+// using VITE_PAYLONY_SECRET_KEY, exposing your Paylony secret key to every visitor.
+// Add a backend route (e.g. GET /api/auth/paylony-accounts) that makes this call
+// server-side with the key from your backend .env, then point this thunk at that route:
+//
+// export const fetchPaylonyAccounts = createAsyncThunk('auth/fetchPaylonyAccounts', async (_, { rejectWithValue }) => {
+//   try {
+//     const response = await api.get('/auth/paylony-accounts');
+//     return response.data;
+//   } catch (error) {
+//     return rejectWithValue(error.response?.data?.message || 'Failed to fetch Paylony accounts');
+//   }
+// });
 
-export const checkVirtualAccount = createAsyncThunk('auth/checkVirtualAccount', async (token, { getState, rejectWithValue }) => {
-  const { auth } = getState();
-  const effectiveToken = token || auth.token || localStorage.getItem('token');
+export const checkVirtualAccount = createAsyncThunk('auth/checkVirtualAccount', async (_, { rejectWithValue }) => {
   try {
-    const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/auth/check-virtual-account`, {
-      headers: { Authorization: `Bearer ${effectiveToken}` },
-    });
+    const response = await api.get('/auth/check-virtual-account');
     return response.data;
   } catch (error) {
     return rejectWithValue(error.response?.data?.message || 'Failed to check virtual account');
   }
 });
 
-export const fundWallet = createAsyncThunk('auth/fundWallet', async ({ token, amount }, { rejectWithValue }) => {
+export const fundWallet = createAsyncThunk('auth/fundWallet', async ({ amount }, { rejectWithValue }) => {
   try {
-    const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/wallet/fund-wallet`, { amount }, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    const response = await api.post('/wallet/fund-wallet', { amount });
     return response.data.data;
   } catch (error) {
     return rejectWithValue(error.response?.data?.message || 'Failed to fund wallet');
+  }
+});
+
+export const logoutUser = createAsyncThunk('auth/logoutUser', async (_, { rejectWithValue }) => {
+  try {
+    await api.post('/auth/logout');
+    return true;
+  } catch (error) {
+    return rejectWithValue(error.response?.data?.message || 'Logout failed');
   }
 });
 
@@ -187,23 +123,23 @@ const authSlice = createSlice({
   name: 'auth',
   initialState: {
     loading: false,
-    token: null,
+    isAuthenticated: false,
     error: null,
     dashboardData: null,
     customerDetails: null,
     virtualAccountCompleted: false,
     paylonyAccounts: [],
-    walletBalance: 0, // Added to track balance explicitly
+    walletBalance: 0,
   },
   reducers: {
     logout: (state) => {
-      state.token = null;
+      state.isAuthenticated = false;
       state.dashboardData = null;
       state.error = null;
       state.customerDetails = null;
       state.virtualAccountCompleted = false;
       state.walletBalance = 0;
-      localStorage.removeItem('token');
+      // No localStorage to clear — call the logoutUser thunk to clear the httpOnly cookie server-side.
     },
     updateWalletBalance: (state, action) => {
       state.walletBalance += action.payload.amount || 0;
@@ -218,10 +154,8 @@ const authSlice = createSlice({
         state.loading = true;
         state.error = null;
       })
-      .addCase(registerUser.fulfilled, (state, action) => {
+      .addCase(registerUser.fulfilled, (state) => {
         state.loading = false;
-        state.token = action.payload.token;
-
       })
       .addCase(registerUser.rejected, (state, action) => {
         state.loading = false;
@@ -231,10 +165,9 @@ const authSlice = createSlice({
         state.loading = true;
         state.error = null;
       })
-      .addCase(loginUser.fulfilled, (state, action) => {
+      .addCase(loginUser.fulfilled, (state) => {
         state.loading = false;
-        state.token = action.payload.token;
-
+        state.isAuthenticated = true;
       })
       .addCase(loginUser.rejected, (state, action) => {
         state.loading = false;
@@ -244,7 +177,7 @@ const authSlice = createSlice({
         state.loading = true;
         state.error = null;
       })
-      .addCase(verifyEmail.fulfilled, (state, action) => {
+      .addCase(verifyEmail.fulfilled, (state) => {
         state.loading = false;
       })
       .addCase(verifyEmail.rejected, (state, action) => {
@@ -257,6 +190,7 @@ const authSlice = createSlice({
       })
       .addCase(fetchDashboard.fulfilled, (state, action) => {
         state.loading = false;
+        state.isAuthenticated = true;
         state.dashboardData = action.payload;
         if (action.payload?.user?.wallet?.balance) {
           state.walletBalance = action.payload.user.wallet.balance;
@@ -307,18 +241,6 @@ const authSlice = createSlice({
         state.loading = false;
         state.error = action.payload;
       })
-      .addCase(fetchPaylonyAccounts.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
-      .addCase(fetchPaylonyAccounts.fulfilled, (state, action) => {
-        state.loading = false;
-        state.paylonyAccounts = action.payload.data || [];
-      })
-      .addCase(fetchPaylonyAccounts.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload;
-      })
       .addCase(checkVirtualAccount.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -351,6 +273,13 @@ const authSlice = createSlice({
       .addCase(fundWallet.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
+      })
+      .addCase(logoutUser.fulfilled, (state) => {
+        state.isAuthenticated = false;
+        state.dashboardData = null;
+        state.customerDetails = null;
+        state.virtualAccountCompleted = false;
+        state.walletBalance = 0;
       });
   },
 });

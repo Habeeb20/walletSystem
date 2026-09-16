@@ -14,7 +14,6 @@ const Airtime = () => {
 
   const dispatch = useDispatch();
   const { loading, error, walletBalance } = useSelector((state) => state.wallet);
-  const token = useSelector((state) => state.auth.token) || localStorage.getItem('token');
   const { enqueueSnackbar } = useSnackbar();
 
   const [selectedNetwork, setSelectedNetwork] = useState('');
@@ -23,10 +22,8 @@ const Airtime = () => {
   const [customAmount, setCustomAmount] = useState('');
 
   useEffect(() => {
-    if (token) {
-      dispatch(fetchWalletBalance(token));
-    }
-  }, [dispatch, token]);
+    dispatch(fetchWalletBalance());
+  }, [dispatch]);
 
   const handleRecharge = async (e) => {
     e.preventDefault();
@@ -46,9 +43,9 @@ const Airtime = () => {
     }
 
     try {
-      await dispatch(rechargeAirtime({ network: selectedNetwork, amount: finalAmount, phone, token })).unwrap();
+      await dispatch(rechargeAirtime({ network: selectedNetwork, amount: finalAmount, phone })).unwrap();
       enqueueSnackbar('Airtime recharge successful', { variant: 'success' });
-      dispatch(fetchWalletBalance(token));
+      dispatch(fetchWalletBalance());
       setSelectedNetwork('');
       setSelectedAmount('');
       setCustomAmount('');

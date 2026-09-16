@@ -5,7 +5,7 @@
 
 import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchCustomerDetails, createPaylonyVirtualAccount, checkVirtualAccount, fetchPaylonyAccounts } from '../../redux/authSlice';
+import { fetchCustomerDetails, createPaylonyVirtualAccount, checkVirtualAccount } from '../../redux/authSlice';
 import { useSnackbar } from 'notistack';
 import WalletLoadingAnimation from '../../resources/wallet';
 
@@ -13,7 +13,6 @@ const Profile = () => {
   const dispatch = useDispatch();
   const { loading, customerDetails, error, virtualAccountCompleted, paylonyAccounts } = useSelector((state) => state.auth);
   console.log(customerDetails)
-  const token = localStorage.getItem('token');
   const [showVirtualAccountForm, setShowVirtualAccountForm] = useState(false);
   const [showPaylonyAccountForm, setShowPaylonyAccountForm] = useState(false);
   const [virtualAccountData, setVirtualAccountData] = useState({
@@ -33,23 +32,19 @@ const Profile = () => {
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      if (token) {
-        dispatch(fetchCustomerDetails()).then((action) => {
-          console.log('Fetched Customer Details:', action.payload);
-          setInitialCustomerDetails(action.payload.data || {});
-        });
-        dispatch(checkVirtualAccount(token)).then((action) => {
-          console.log('Check Virtual Account Result:', action.payload);
-        });
-        dispatch(fetchPaylonyAccounts(token)).then((action) => {
-          console.log('Fetched Paylony Accounts:', action.payload);
-        });
-      } else {
-        console.warn('Token not available, delaying fetch...');
-      }
+      dispatch(fetchCustomerDetails()).then((action) => {
+        console.log('Fetched Customer Details:', action.payload);
+        setInitialCustomerDetails(action.payload.data || {});
+      });
+      dispatch(checkVirtualAccount()).then((action) => {
+        console.log('Check Virtual Account Result:', action.payload);
+      });
+      // fetchPaylonyAccounts was removed — it called the Paylony API directly from the
+      // browser using a secret key. Add a backend route (see authSlice.js note) and
+      // re-enable this once that route exists.
     }, 500);
     return () => clearTimeout(timer);
-  }, [dispatch, token]);
+  }, [dispatch]);
 
   const handleCreateVirtualAccount = () => {
     console.log('Paystack Button Clicked');
@@ -67,7 +62,6 @@ const Profile = () => {
     try {
       await dispatch(
         createPaylonyVirtualAccount({
-          token,
           customerId: customerDetails?.id,
           dob: virtualAccountData.dob,
           address: virtualAccountData.address,
@@ -76,8 +70,7 @@ const Profile = () => {
       ).unwrap();
       setShowVirtualAccountForm(false);
       dispatch(fetchCustomerDetails());
-      dispatch(checkVirtualAccount(token));
-      dispatch(fetchPaylonyAccounts(token));
+      dispatch(checkVirtualAccount());
       enqueueSnackbar('Virtual account created successfully', { variant: 'success' });
     } catch (error) {
       console.error('Failed to create virtual account:', error);
@@ -98,7 +91,6 @@ const handlePaylonyAccountSubmit = async (e) => {
   try {
     await dispatch(
       createPaylonyVirtualAccount({
-        token,
         customerId: customerDetails?.id,
         firstname: customerDetails?.first_name || '',
         lastname: customerDetails?.last_name || '',
@@ -111,8 +103,7 @@ const handlePaylonyAccountSubmit = async (e) => {
     ).unwrap();
     setShowPaylonyAccountForm(false);
     dispatch(fetchCustomerDetails());
-    dispatch(checkVirtualAccount(token));
-    dispatch(fetchPaylonyAccounts(token)); // Ensure this is updated to use backend
+    dispatch(checkVirtualAccount());
     enqueueSnackbar('Paylony virtual account created successfully', { variant: 'success' });
   } catch (error) {
     console.error('Failed to create Paylony virtual account:', error.response?.data || error.message);
