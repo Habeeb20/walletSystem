@@ -45,7 +45,8 @@ function DashboardContent({ handleMenuClick }) { // Receive handleMenuClick as p
 
   const fetchPaylonyTransactions = async () => {
     try {
-      const response = await api.get('/wallet/fetch-paylony-transactions');
+      const response = await api.get('/wallet/wallet-balance');
+      console.log(response.data)
       if (response.data.success && response.data.wallet) {
         dispatch({ type: 'auth/updateWalletBalance', payload: { amount: response.data.wallet.balance } });
       }
