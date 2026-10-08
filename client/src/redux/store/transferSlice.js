@@ -16,10 +16,12 @@ export const verifyAccount = createAsyncThunk(
 
 export const transferFunds = createAsyncThunk(
   'transfer/transferFunds',
-  async ({ account_number, amount, narration, bank_code, bank_name }, { rejectWithValue }) => {
+  async ({ account_number,  account_name,  amount, narration, bank_code, bank_name }, { rejectWithValue }) => {
     try {
       const response = await api.post('/transfer/transferfunds', {
         account_number,
+          account_name,
+
         amount: amount.toString(),
         narration,
         bank_code,
