@@ -4,7 +4,8 @@
  */
 export const AppConfig = {
   apiBaseUrl:
-    process.env.EXPO_PUBLIC_API_BASE_URL ?? 'https://flexipay.jamiuadewaleyusuf.com/api',
+    process.env.EXPO_PUBLIC_API_BASE_URL ?? 'http://192.168.100.13:8080/api',
+    // process.env.EXPO_PUBLIC_API_BASE_URL ?? 'https://flexipay.jamiuadewaleyusuf.com/api',
 
   /**
    * Whether to enforce TLS public-key pinning. Off by default until real pins are

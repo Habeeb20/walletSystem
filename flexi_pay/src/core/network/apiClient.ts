@@ -1,6 +1,7 @@
 import { ApiEndpoints } from '@/config/apiEndpoints';
 import { ApiError } from '@/models/types';
 import { SecureStorage } from '../security/secureStorage';
+import { Connectivity } from './connectivity';
 import { ensureTransportReady } from './sslPinning';
 
 const TIMEOUT_MS = 30_000;
@@ -9,8 +10,9 @@ type UnauthorizedHandler = () => Promise<void>;
 
 /**
  * Single shared HTTP client for the whole app: injects the bearer token, applies a timeout,
- * parses backend error bodies into ApiError, enforces optional TLS pinning, and force-logs-out
- * on any 401/403 (revoked/expired token).
+ * parses backend error bodies into ApiError, enforces optional TLS pinning, reports request
+ * timing to Connectivity (for slow/offline detection), and force-logs-out on any 401/403
+ * (revoked/expired token).
  */
 class ApiClientImpl {
   /** Wired up from the app root once navigation exists, so a 401 anywhere can clear the session. */
@@ -30,17 +32,27 @@ class ApiClientImpl {
 
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
+    const started = Date.now();
+
+    let response: Response;
     try {
-      const response = await fetch(ApiEndpoints.full(path), {
+      response = await fetch(ApiEndpoints.full(path), {
         method,
         headers: await this.headers(auth),
         body: body !== undefined ? JSON.stringify(body) : undefined,
         signal: controller.signal,
       });
-      return await this.handle(response);
+    } catch (e) {
+      // No response at all: network error or our 30s timeout.
+      Connectivity.reportRequest(Date.now() - started, false);
+      throw e;
     } finally {
       clearTimeout(timer);
     }
+
+    // Any HTTP response (even 401 or 500) proves the network works; only its speed matters.
+    Connectivity.reportRequest(Date.now() - started, true);
+    return this.handle(response);
   }
 
   private async handle(response: Response): Promise<any> {

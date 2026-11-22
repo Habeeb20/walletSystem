@@ -1,10 +1,11 @@
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { type ColorValue, Pressable, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AppDrawer } from '@/components/AppDrawer';
+import { Connectivity } from '@/core/network/connectivity';
 import { dashboardStore } from '@/lib/dashboardStore';
 import { useEvent, WALLET_CHANGED } from '@/lib/events';
 import { colors } from '@/theme/colors';
@@ -35,10 +36,24 @@ function MainHeader({ title, onMenu }: { title: string; onMenu: () => void }) {
 export default function MainLayout() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const { data } = dashboardStore.useDashboard();
+  const { quality } = Connectivity.useConnectivity();
+  const previousQuality = useRef(quality);
 
+  // Show saved data instantly, then refresh from the server.
   useEffect(() => {
-    dashboardStore.load();
+    (async () => {
+      await dashboardStore.restore();
+      await dashboardStore.load();
+    })();
   }, []);
+
+  // Back online after being offline: refresh quietly.
+  useEffect(() => {
+    if (previousQuality.current === 'offline' && quality !== 'offline') {
+      dashboardStore.load('silent');
+    }
+    previousQuality.current = quality;
+  }, [quality]);
 
   // Any purchase, transfer or funding flow emits this so balances and history stay fresh.
   useEvent(WALLET_CHANGED, () => dashboardStore.load('silent'));

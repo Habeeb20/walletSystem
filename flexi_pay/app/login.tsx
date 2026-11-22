@@ -50,6 +50,7 @@ export default function LoginScreen() {
       await AuthService.loginWithEmailPassword({ email: email.trim(), password });
       await onLoginVerified();
     } catch (e) {
+      console.log(e)
       toast.error(e instanceof ApiError ? e.message : 'Login failed. Please try again.');
     } finally {
       setLoading(false);

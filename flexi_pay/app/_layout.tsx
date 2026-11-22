@@ -6,8 +6,10 @@ import { useEffect } from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { AppLockScreen } from '@/components/AppLockScreen';
+import { ConnectionBanner } from '@/components/connectionBanner';
 import { ToastHost } from '@/components/ui/Toast';
 import { ApiClient } from '@/core/network/apiClient';
+import { Connectivity } from '@/core/network/connectivity';
 import { AppLock } from '@/core/security/appLock';
 import { Nav } from '@/lib/navigation';
 import { AuthService } from '@/services/authService';
@@ -16,6 +18,7 @@ export default function RootLayout() {
   const { isLocked } = AppLock.useLock();
 
   useEffect(() => {
+    const stopConnectivity = Connectivity.start();
     AppLock.initialize();
     const detach = AppLock.attach();
 
@@ -35,6 +38,7 @@ export default function RootLayout() {
     };
 
     return () => {
+      stopConnectivity();
       detach();
       ApiClient.onUnauthorized = undefined;
     };
@@ -45,6 +49,7 @@ export default function RootLayout() {
       <StatusBar style="dark" />
       <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: '#F7FAFC' } }} />
       {isLocked ? <AppLockScreen /> : null}
+      <ConnectionBanner />
       <ToastHost />
     </SafeAreaProvider>
   );

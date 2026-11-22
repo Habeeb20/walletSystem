@@ -39,6 +39,13 @@ export const ApiEndpoints = {
   // ---- Airtime / Data (/api/airtime) ----
   buyAirtime: '/airtime/buy-airtime',
   buyDataPin: '/airtime/buy-data-pin',
+  // TODO: confirm the next six paths against your API docs (not in the original app).
+  buyAirtimeForeign: '/airtime/buy-airtime-foreign',
+  buyAirtimePin: '/airtime/buy-airtime-pin',
+  buyDataForeign: '/airtime/buy-data-foreign',
+  bettingTopup: '/betting/topup',
+  resultChecker: '/education/result-checker',
+  buyJamb: '/education/buy-jamb',
   buyData: '/airtime/buy-data',
 
   // ---- Electricity (/api/electricty: matches the backend's spelling) ----

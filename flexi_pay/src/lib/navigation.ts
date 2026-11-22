@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-
+import { ApiError } from '@/models/types';
 import { ProfileService } from '@/services/profileService';
 
 export type MainTab = 'home' | 'bills' | 'wallet' | 'history' | 'settings';
@@ -34,14 +34,18 @@ export const Nav = {
    * home until the backend's Paylony dedicated account exists, which is what makes wallet
    * funding work, so it can't be skipped.
    */
+
+
   async toHomeOrCompleteProfile() {
-    let complete: boolean;
-    try {
-      complete = await ProfileService.isProfileComplete();
-    } catch {
-      complete = false;
-    }
-    if (complete) Nav.toHome();
-    else Nav.toCompleteProfile();
-  },
+  let complete: boolean;
+  try {
+    complete = await ProfileService.isProfileComplete();
+  } catch (e) {
+    // A server reply (ApiError) means the profile really isn't complete. Anything else is
+    // a network failure, so send the user home and show their saved data instead.
+    complete = !(e instanceof ApiError) ? true : false;
+  }
+  if (complete) Nav.toHome();
+  else Nav.toCompleteProfile();
+},
 };
