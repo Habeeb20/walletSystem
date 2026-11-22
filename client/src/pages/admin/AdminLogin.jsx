@@ -22,7 +22,7 @@ const AdminLogin = () => {
       const res = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/admin/login`, formData);
       localStorage.setItem('adminToken', res.data.token);
       toast.success('Admin login successful!');
-      navigate('/admin/dashboard');
+      navigate('/admin');
     } catch (err) {
       toast.error(err.response?.data?.message || 'Login failed');
     } finally {

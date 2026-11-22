@@ -21,8 +21,9 @@ import { useState } from 'react';
 import ErrorModal from './component/ErrorModal';
 import ContactUs from './component/home/ContactUs';
 import AdminLogin from './pages/admin/AdminLogin';
-import AdminDashboard from './pages/admin/AdminDashboard';
+// import AdminDashboard from './pages/admin/AdminDashboard';
 import EmailLoginPage from './pages/auth/EmailLoginPage';
+import AdminDashboardLayout from './AdminDashboardLayout';
 
 const AppContent = () => {
   const location = useLocation();
@@ -51,7 +52,8 @@ const AppContent = () => {
         <Route path="/email" element={<EmailLoginPage />} />
         <Route path="*" element={<NotFound />} />
         <Route path="/admin/login" element={<AdminLogin />} />
-<Route path="/admin/dashboard" element={<AdminDashboard />} />
+{/* <Route path="/admin/dashboard" element={<AdminDashboard />} /> */}
+<Route path="/admin" element={<AdminDashboardLayout />} />
       </Routes>
       {showHeaderFooter && <Footer />}
 
